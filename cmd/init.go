@@ -5,11 +5,12 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/spf13/cobra"
+
 	"turbotilt/internal/config"
 	"turbotilt/internal/render"
 	"turbotilt/internal/scan"
-
-	"github.com/spf13/cobra"
 )
 
 var (

@@ -6,9 +6,10 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"turbotilt/internal/render"
 
 	"gopkg.in/yaml.v3"
+
+	"turbotilt/internal/render"
 )
 
 // Constantes pour les noms de fichier

@@ -7,10 +7,11 @@ import (
 	"runtime"
 	"strings"
 	"time"
-	"turbotilt/internal/config"
-	"turbotilt/internal/logger"
 
 	"github.com/spf13/cobra"
+
+	"turbotilt/internal/config"
+	"turbotilt/internal/logger"
 )
 
 // Structure pour stocker les résultats de diagnostics - commented out as currently unused

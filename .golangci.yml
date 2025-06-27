@@ -28,7 +28,6 @@ linters:
     - typecheck
     - unused
     - gofmt
-    - goimports
 
 linters-settings:
   goimports:

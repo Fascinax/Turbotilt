@@ -3,12 +3,13 @@ package runtime
 import (
 	"fmt"
 	"os"
-	"turbotilt/internal/config"
 
 	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+
+	"turbotilt/internal/config"
 )
 
 var (

@@ -3,11 +3,12 @@ package cmd
 import (
 	"fmt"
 	"os"
+
+	"github.com/spf13/cobra"
+
 	"turbotilt/internal/config"
 	"turbotilt/internal/logger"
 	"turbotilt/internal/scan"
-
-	"github.com/spf13/cobra"
 )
 
 var (
