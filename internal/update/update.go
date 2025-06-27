@@ -12,9 +12,23 @@ import (
 	"time"
 )
 
-const (
-	githubAPI      = "https://api.github.com/repos/Fascinax/turbotilt/releases/latest"
-	updateCheckTTL = 24 * time.Hour
+// Constants and variables for testing
+var (
+	githubAPI          = "https://api.github.com/repos/Fascinax/turbotilt/releases/latest"
+	updateCheckTTL     = 24 * time.Hour
+	getUpdateTimestampPath = func() string {
+		var configDir string
+		switch runtime.GOOS {
+		case "windows":
+			configDir = filepath.Join(os.Getenv("APPDATA"), "turbotilt")
+		case "darwin":
+			configDir = filepath.Join(os.Getenv("HOME"), "Library", "Application Support", "turbotilt")
+		default: // Linux and others
+			configDir = filepath.Join(os.Getenv("HOME"), ".config", "turbotilt")
+		}
+		
+		return filepath.Join(configDir, "update_timestamp")
+	}
 )
 
 // Release represents GitHub release information
@@ -84,20 +98,7 @@ func updateLastCheckTime() {
 	defer f.Close()
 }
 
-// getUpdateTimestampPath returns the path to the update timestamp file
-func getUpdateTimestampPath() string {
-	var configDir string
-	switch runtime.GOOS {
-	case "windows":
-		configDir = filepath.Join(os.Getenv("APPDATA"), "turbotilt")
-	case "darwin":
-		configDir = filepath.Join(os.Getenv("HOME"), "Library", "Application Support", "turbotilt")
-	default: // Linux and others
-		configDir = filepath.Join(os.Getenv("HOME"), ".config", "turbotilt")
-	}
-	
-	return filepath.Join(configDir, "update_timestamp")
-}
+// getUpdateTimestampPath is defined at the top of the file
 
 // getLatestRelease fetches the latest release info from GitHub API
 func getLatestRelease() (*Release, error) {
@@ -128,6 +129,11 @@ func getLatestRelease() (*Release, error) {
 // isNewer checks if latestVersion is newer than currentVersion
 func isNewer(currentVersion, latestVersion string) bool {
 	// Simple string comparison (assumes semver format like "1.2.3")
+	// Pre-release versions (with a hyphen like 1.2.3-alpha) are considered older
+	if strings.Contains(latestVersion, "-") && !strings.Contains(currentVersion, "-") {
+		return false
+	}
+	
 	return latestVersion > currentVersion
 }
 

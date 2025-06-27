@@ -77,14 +77,21 @@ func GenerateTiltfile(opts Options) error {
 
 	// Charger le template depuis le fichier
 	// Chercher les templates dans cet ordre : répertoire courant, répertoire du projet, répertoire parent
-	tmplPaths := []string{"templates/Tiltfile.tmpl", "../templates/Tiltfile.tmpl"}
+	tmplPaths := []string{
+		"templates/Tiltfile.tmpl", 
+		"../templates/Tiltfile.tmpl",
+		"Tiltfile.tmpl",  // Pour les tests qui créent le template directement
+	}
 	var tmpl *template.Template
 	var templateErr error
 
 	for _, tmplPath := range tmplPaths {
-		tmpl, err = template.New("Tiltfile").Delims("[[", "]]").Funcs(funcMap).ParseFiles(tmplPath)
-		if err == nil {
-			break
+		// Vérifier si le fichier existe avant d'essayer de le parser
+		if _, statErr := os.Stat(tmplPath); statErr == nil {
+			tmpl, err = template.New("Tiltfile").Delims("[[", "]]").Funcs(funcMap).ParseFiles(tmplPath)
+			if err == nil {
+				break
+			}
 		}
 		templateErr = err
 	}
@@ -151,15 +158,20 @@ func GenerateMultiServiceTiltfile(serviceList ServiceList) error {
 		"../templates/Tiltfile.multi.tmpl",
 		"templates/Tiltfile.tmpl",
 		"../templates/Tiltfile.tmpl",
+		"Tiltfile.multi.tmpl",  // Pour les tests qui créent le template directement
+		"Tiltfile.tmpl",        // Pour les tests qui créent le template directement
 	}
 
 	var tmpl *template.Template
 	var templateErr error
 
 	for _, tmplPath := range tmplPaths {
-		tmpl, err = template.New("Tiltfile").Delims("[[", "]]").Funcs(funcMap).ParseFiles(tmplPath)
-		if err == nil {
-			break
+		// Vérifier si le fichier existe avant d'essayer de le parser
+		if _, statErr := os.Stat(tmplPath); statErr == nil {
+			tmpl, err = template.New("Tiltfile").Delims("[[", "]]").Funcs(funcMap).ParseFiles(tmplPath)
+			if err == nil {
+				break
+			}
 		}
 		templateErr = err
 	}
@@ -182,6 +194,53 @@ docker_compose('docker-compose.yml')
 	}
 
 	return nil
+}
+
+// GenerateTiltfileFromTemplate génère un Tiltfile personnalisé pour le test
+func GenerateTiltfileFromTemplate(opts Options, templatePath string, outputPath string) error {
+	f, err := os.Create(outputPath)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	// Préparer les données pour le template
+	data := TiltfileTemplateData{
+		Framework:      opts.Framework,
+		AppName:        opts.AppName,
+		Port:           opts.Port,
+		Date:           time.Now().Format("2006-01-02 15:04:05"),
+		DevMode:        opts.DevMode,
+		IsMultiService: false,
+	}
+
+	// Charger le template depuis le fichier
+	tmpl, err := template.New(filepath.Base(templatePath)).Delims("[[", "]]").Parse(string(mustReadFile(templatePath)))
+	if err != nil {
+		return err
+	}
+
+	// Exécuter le template
+	return tmpl.Execute(f, data)
+}
+
+// mustReadFile lit un fichier et panique en cas d'erreur
+func mustReadFile(path string) []byte {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		panic(err)
+	}
+	return data
+}
+
+// createTestTemplate creates a template file for testing and returns its path
+func createTestTemplate(content, filename string) (string, error) {
+	// Create in current directory for tests
+	err := os.WriteFile(filename, []byte(content), 0644)
+	if err != nil {
+		return "", err
+	}
+	return filename, nil
 }
 
 // Note: La constante tiltfileTemplateMulti et la fonction generateMultiServiceTiltfile

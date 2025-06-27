@@ -26,6 +26,88 @@ type GradleBuild struct {
 	Content string
 }
 
+// Scanner struct for detecting frameworks and services
+type Scanner struct {
+	ProjectPath string
+}
+
+// NewScanner creates a new Scanner instance for the given project path
+func NewScanner(projectPath string) *Scanner {
+	return &Scanner{
+		ProjectPath: projectPath,
+	}
+}
+
+// DetectFramework detects the framework used in the project
+func (s *Scanner) DetectFramework() (string, *DetectionResult, error) {
+	// Create instances of detectors
+	micronautDetector := &MicronautDetector{}
+	
+	// First check for Micronaut framework
+	detected, result, err := micronautDetector.Detect(s.ProjectPath)
+	if err == nil && detected {
+		return result.Framework, &result, nil
+	}
+	
+	// If Micronaut not detected, fall back to simpler detection methods
+	// Check for pom.xml (Maven)
+	pomPath := filepath.Join(s.ProjectPath, "pom.xml")
+	if _, err := os.Stat(pomPath); err == nil {
+		data, err := os.ReadFile(pomPath)
+		if err == nil {
+			content := string(data)
+			// Check for Spring Boot
+			if strings.Contains(content, "spring-boot") {
+				result := DetectionResult{
+					Framework:   "spring",
+					BuildSystem: "maven",
+					Detected:    true,
+				}
+				return "spring", &result, nil
+			}
+			// Check for Quarkus
+			if strings.Contains(content, "quarkus") {
+				result := DetectionResult{
+					Framework:   "quarkus",
+					BuildSystem: "maven",
+					Detected:    true,
+				}
+				return "quarkus", &result, nil
+			}
+		}
+	}
+	
+	// Check for build.gradle (Gradle)
+	gradlePath := filepath.Join(s.ProjectPath, "build.gradle")
+	if _, err := os.Stat(gradlePath); err == nil {
+		data, err := os.ReadFile(gradlePath)
+		if err == nil {
+			content := string(data)
+			// Check for Spring Boot
+			if strings.Contains(content, "spring-boot") {
+				result := DetectionResult{
+					Framework:   "spring",
+					BuildSystem: "gradle",
+					Detected:    true,
+				}
+				return "spring", &result, nil
+			}
+			// Check for Quarkus
+			if strings.Contains(content, "quarkus") {
+				result := DetectionResult{
+					Framework:   "quarkus",
+					BuildSystem: "gradle",
+					Detected:    true,
+				}
+				return "quarkus", &result, nil
+			}
+		}
+	}
+	
+	// No framework detected
+	return "", nil, fmt.Errorf("no framework detected")
+}
+
 // DetectFramework détecte le framework utilisé dans le projet
 func DetectFramework() (string, error) {
 	// Détection Maven (pom.xml)

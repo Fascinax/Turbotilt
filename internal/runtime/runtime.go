@@ -6,6 +6,12 @@ import (
 	"os/exec"
 )
 
+// Variable pour faciliter les tests unitaires
+var execCommand = exec.Command
+
+// Variable pour faciliter les tests unitaires
+var isTiltInstalled = checkTiltInstalled
+
 // Options pour l'exécution
 type RunOptions struct {
 	UseTilt     bool
@@ -45,7 +51,7 @@ func TiltUp(opts RunOptions) error {
 		return nil
 	}
 	
-	cmd := exec.Command("tilt", args...)
+	cmd := execCommand("tilt", args...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 
@@ -72,15 +78,16 @@ func ComposeUp(opts RunOptions) error {
 		return nil
 	}
 	
-	cmd := exec.Command("docker", args...)
+	cmd := execCommand("docker", args...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 
 	return cmd.Run()
 }
 
-// isTiltInstalled vérifie si Tilt est installé
-func isTiltInstalled() bool {
+// checkTiltInstalled est l'implémentation réelle de la vérification
+// Séparée pour permettre le mocking dans les tests
+func checkTiltInstalled() bool {
 	cmd := exec.Command("tilt", "version")
 	if err := cmd.Run(); err != nil {
 		return false

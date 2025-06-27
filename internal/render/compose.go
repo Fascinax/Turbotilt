@@ -319,14 +319,106 @@ func GenerateMultiServiceCompose(serviceList ServiceList) error {
 		sb.WriteString("\n")
 	}
 
-	// TODO: Ajouter les services dépendants (MySQL, Redis, etc.) détectés
-	// Cette partie sera similaire à GenerateComposeWithServices mais en utilisant
-	// les services dépendants déclarés dans le manifeste
+	// Ajouter les services dépendants (MySQL, Redis, etc.) détectés
+	volumes := make(map[string]bool)
+	
+	// Parcourir chaque service pour ses dépendances
+	for _, opts := range serviceList.Services {
+		// Traiter les services dépendants de ce service
+		for _, service := range opts.Services {
+			var serviceDefinition ComposeServiceDefinition
 
-	// Ajouter les volumes (pour les services dépendants)
-	// Note: à compléter avec les volumes des services dépendants
+			switch service.Type {
+			case scan.MySQL:
+				serviceDefinition = ComposeServiceDefinition{
+					Name:    "mysql",
+					Image:   fmt.Sprintf("image: mysql:%s", getOrDefault(service.Version, "latest")),
+					Port:    fmt.Sprintf("%s:3306", getOrDefault(service.Port, "3306")),
+					Volumes: []string{"mysql_data:/var/lib/mysql"},
+					Environment: map[string]string{
+						"MYSQL_ROOT_PASSWORD": getFromCredentials(service.Credentials, "MYSQL_ROOT_PASSWORD", "root"),
+						"MYSQL_DATABASE":      getFromCredentials(service.Credentials, "MYSQL_DATABASE", "app"),
+					},
+				}
+				volumes["mysql_data"] = true
+
+			case scan.PostgreSQL:
+				serviceDefinition = ComposeServiceDefinition{
+					Name:    "postgres",
+					Image:   fmt.Sprintf("image: postgres:%s", getOrDefault(service.Version, "latest")),
+					Port:    fmt.Sprintf("%s:5432", getOrDefault(service.Port, "5432")),
+					Volumes: []string{"postgres_data:/var/lib/postgresql/data"},
+					Environment: map[string]string{
+						"POSTGRES_USER":     getFromCredentials(service.Credentials, "POSTGRES_USER", "postgres"),
+						"POSTGRES_PASSWORD": getFromCredentials(service.Credentials, "POSTGRES_PASSWORD", "postgres"),
+						"POSTGRES_DB":       getFromCredentials(service.Credentials, "POSTGRES_DB", "app"),
+					},
+				}
+				volumes["postgres_data"] = true
+
+			case scan.MongoDB:
+				serviceDefinition = ComposeServiceDefinition{
+					Name:    "mongodb",
+					Image:   fmt.Sprintf("image: mongo:%s", getOrDefault(service.Version, "latest")),
+					Port:    fmt.Sprintf("%s:27017", getOrDefault(service.Port, "27017")),
+					Volumes: []string{"mongo_data:/data/db"},
+				}
+				volumes["mongo_data"] = true
+
+			case scan.Redis:
+				serviceDefinition = ComposeServiceDefinition{
+					Name:    "redis",
+					Image:   fmt.Sprintf("image: redis:%s", getOrDefault(service.Version, "latest")),
+					Port:    fmt.Sprintf("%s:6379", getOrDefault(service.Port, "6379")),
+					Volumes: []string{"redis_data:/data"},
+				}
+				volumes["redis_data"] = true
+			}
+
+			if serviceDefinition.Name != "" {
+				// Ajouter le service au docker-compose
+				sb.WriteString(fmt.Sprintf("  %s:\n", serviceDefinition.Name))
+				sb.WriteString(fmt.Sprintf("    %s\n", serviceDefinition.Image))
+				
+				if serviceDefinition.Port != "" {
+					sb.WriteString("    ports:\n")
+					sb.WriteString(fmt.Sprintf("      - '%s'\n", serviceDefinition.Port))
+				}
+				
+				if len(serviceDefinition.Environment) > 0 {
+					sb.WriteString("    environment:\n")
+					for k, v := range serviceDefinition.Environment {
+						sb.WriteString(fmt.Sprintf("      - %s=%s\n", k, v))
+					}
+				}
+				
+				if len(serviceDefinition.Volumes) > 0 {
+					sb.WriteString("    volumes:\n")
+					for _, volume := range serviceDefinition.Volumes {
+						sb.WriteString(fmt.Sprintf("      - %s\n", volume))
+					}
+				}
+				
+				sb.WriteString("\n")
+			}
+		}
+	}
+
+	// Ajouter les volumes si nécessaire
+	if len(volumes) > 0 {
+		sb.WriteString("volumes:\n")
+		for volume := range volumes {
+			sb.WriteString(fmt.Sprintf("  %s:\n", volume))
+		}
+	}
 
 	// Écrire le contenu dans le fichier
 	_, err = f.WriteString(sb.String())
 	return err
+}
+
+// GenerateComposeMultiService est un alias pour GenerateMultiServiceCompose
+// Ajouté pour compatibilité avec les tests
+func GenerateComposeMultiService(serviceList ServiceList) error {
+	return GenerateMultiServiceCompose(serviceList)
 }

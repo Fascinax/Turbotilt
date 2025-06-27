@@ -66,7 +66,7 @@ func InitModel() tea.Model {
 	ti.CharLimit = 156
 	ti.Width = 50
 
-	m := InteractiveConfig{
+	m := &InteractiveConfig{
 		list:         l,
 		textInput:    ti,
 		config:       config.DefaultConfig("unknown"),
@@ -79,12 +79,12 @@ func InitModel() tea.Model {
 }
 
 // Init initialise le modèle
-func (m InteractiveConfig) Init() tea.Cmd {
+func (m *InteractiveConfig) Init() tea.Cmd {
 	return nil
 }
 
 // Update met à jour le modèle avec les événements utilisateur
-func (m InteractiveConfig) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m *InteractiveConfig) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
@@ -164,6 +164,9 @@ func (m InteractiveConfig) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		}
 
+	case tea.QuitMsg:
+		m.quitting = true
+		return m, nil
 	// Gérer les mises à jour des widgets
 	case tea.WindowSizeMsg:
 		h, v := lipgloss.NewStyle().Margin(1, 2).GetFrameSize()
@@ -184,7 +187,7 @@ func (m InteractiveConfig) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 // generateFiles est un tea.Cmd qui génère les fichiers
-func generateFiles(m InteractiveConfig) tea.Cmd {
+func generateFiles(m *InteractiveConfig) tea.Cmd {
 	return func() tea.Msg {
 		p := tea.NewProgram(generateFilesModel{config: m.config})
 		err := p.Start()
@@ -193,7 +196,7 @@ func generateFiles(m InteractiveConfig) tea.Cmd {
 }
 
 // startEnvironment est un tea.Cmd qui démarre l'environnement
-func startEnvironment(m InteractiveConfig) tea.Cmd {
+func startEnvironment(m *InteractiveConfig) tea.Cmd {
 	return func() tea.Msg {
 		p := tea.NewProgram(startEnvironmentModel{})
 		err := p.Start()
@@ -256,9 +259,9 @@ type startEnvironmentFinishedMsg struct {
 }
 
 // View renvoie la représentation textuelle du modèle
-func (m InteractiveConfig) View() string {
+func (m *InteractiveConfig) View() string {
 	if m.quitting {
-		return quitTextStyle.Render("Merci d'avoir utilisé Turbotilt!")
+		return quitTextStyle.Render("Merci d'avoir utilisé Turbotilt! Configuration générée pour " + m.config.Project.Name)
 	}
 
 	// Afficher le contenu selon l'étape actuelle

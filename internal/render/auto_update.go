@@ -67,12 +67,12 @@ func (w *AutoUpdateWatcher) Stop() {
 
 // TriggerUpdate manually triggers an update check
 func (w *AutoUpdateWatcher) TriggerUpdate() bool {
-	if !w.isRunning {
+	select {
+	case w.updateTriggered <- true:
+		return true
+	default:
 		return false
 	}
-	
-	w.updateTriggered <- true
-	return true
 }
 
 // WaitForUpdate blocks until an update is performed or timeout occurs

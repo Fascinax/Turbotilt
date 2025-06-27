@@ -69,6 +69,18 @@ coverage:
 	$(GOTEST) -coverprofile=coverage.out ./...
 	$(GO) tool cover -html=coverage.out -o coverage.html
 
+coverage-html:
+	@echo "Génération de la couverture de tests avec visualisation HTML..."
+	$(GOTEST) -coverprofile=coverage.out ./...
+	$(GO) tool cover -html=coverage.out -o coverage.html
+	@echo "Rapport de couverture généré dans coverage.html"
+
+coverage-func:
+	@echo "Analyse fonctionnelle de la couverture de tests..."
+	$(GOTEST) -coverprofile=coverage.out ./...
+	$(GO) tool cover -func=coverage.out
+	@echo "Analyse de couverture terminée"
+
 vet:
 	@echo "Vérification du code avec go vet..."
 	$(GOVET) ./...
@@ -115,6 +127,22 @@ examples:
 # Support pour les tests par package
 test/%:
 	$(GOTEST) -v ./$*
+
+# Cible générique pour exécuter les tests d'un package spécifique
+test-pkg:
+	@if [ "$(PKG)" = "" ]; then \
+		echo "Usage: make test-pkg PKG=<package-path>"; \
+		echo "Example: make test-pkg PKG=./internal/i18n"; \
+		exit 1; \
+	fi
+	@echo "Exécution des tests pour $(PKG)..."
+	$(GOTEST) -v $(PKG)
+
+# Cible pour vérifier la couverture des tests nouvellement ajoutés
+verify-coverage:
+	@echo "Vérification de la couverture des tests..."
+	$(GOTEST) -coverprofile=coverage.out ./...
+	$(GO) tool cover -func=coverage.out | grep total | awk '{print $$3}' | sed 's/%//'
 
 help:
 	@echo "Cibles disponibles:"

@@ -27,15 +27,12 @@ func TestManifestServiceToRenderOptions(t *testing.T) {
 				WatchPaths: []string{"src/main/java", "src/main/resources"},
 			},
 			want: render.Options{
-				AppName:       "test-app",
-				Framework:     "spring",
-				JdkVersion:    "17",
-				BuildSystem:   "maven",
-				Port:          "8080",
-				ServicePath:   "./app",
-				DevMode:       true,
-				Env:           map[string]string{"SPRING_PROFILES_ACTIVE": "dev"},
-				WatchPaths:    []string{"src/main/java", "src/main/resources"},
+				AppName:     "test-app",
+				Framework:    "spring",
+				JDKVersion:   "17",
+				Port:         "8080",
+				Path:         "./app",
+				DevMode:      true,
 			},
 		},
 		{
@@ -50,15 +47,12 @@ func TestManifestServiceToRenderOptions(t *testing.T) {
 				DevMode: true,
 			},
 			want: render.Options{
-				AppName:       "quarkus-app",
-				Framework:     "quarkus",
-				JdkVersion:    "21",
-				BuildSystem:   "gradle",
-				Port:          "8081",
-				ServicePath:   "./quarkus-app",
-				DevMode:       true,
-				Env:           map[string]string{},
-				WatchPaths:    []string{},
+				AppName:     "quarkus-app",
+				Framework:    "quarkus",
+				JDKVersion:   "21",
+				Port:         "8081",
+				Path:         "./quarkus-app",
+				DevMode:      true,
 			},
 		},
 		{
@@ -73,15 +67,12 @@ func TestManifestServiceToRenderOptions(t *testing.T) {
 				DevMode: true,
 			},
 			want: render.Options{
-				AppName:       "micronaut-app",
-				Framework:     "micronaut",
-				JdkVersion:    "17",
-				BuildSystem:   "gradle",
-				Port:          "8082",
-				ServicePath:   "./micronaut-app",
-				DevMode:       true,
-				Env:           map[string]string{},
-				WatchPaths:    []string{},
+				AppName:     "micronaut-app",
+				Framework:    "micronaut",
+				JDKVersion:   "17",
+				Port:         "8082",
+				Path:         "./micronaut-app",
+				DevMode:      true,
 			},
 		},
 	}
@@ -100,17 +91,14 @@ func TestManifestServiceToRenderOptions(t *testing.T) {
 			if got.Framework != tt.want.Framework {
 				t.Errorf("Framework = %v, want %v", got.Framework, tt.want.Framework)
 			}
-			if got.JdkVersion != tt.want.JdkVersion {
-				t.Errorf("JdkVersion = %v, want %v", got.JdkVersion, tt.want.JdkVersion)
-			}
-			if got.BuildSystem != tt.want.BuildSystem {
-				t.Errorf("BuildSystem = %v, want %v", got.BuildSystem, tt.want.BuildSystem)
+			if got.JDKVersion != tt.want.JDKVersion {
+				t.Errorf("JDKVersion = %v, want %v", got.JDKVersion, tt.want.JDKVersion)
 			}
 			if got.Port != tt.want.Port {
 				t.Errorf("Port = %v, want %v", got.Port, tt.want.Port)
 			}
-			if got.ServicePath != tt.want.ServicePath {
-				t.Errorf("ServicePath = %v, want %v", got.ServicePath, tt.want.ServicePath)
+			if got.Path != tt.want.Path {
+				t.Errorf("Path = %v, want %v", got.Path, tt.want.Path)
 			}
 			if got.DevMode != tt.want.DevMode {
 				t.Errorf("DevMode = %v, want %v", got.DevMode, tt.want.DevMode)
@@ -166,7 +154,8 @@ func TestValidateManifest(t *testing.T) {
     port: "8080"
   - name: mysql
     type: mysql
-    version: "8.0"`,
+    version: "8.0"
+    path: ./mysql`,
 			wantErrors: false,
 		},
 	}
