@@ -1,0 +1,5 @@
+# Tiltfile template
+
+docker_build('app', '.', dockerfile='Dockerfile')
+live_update = [ sync('./src', '/app/src') ]
+k8s_yaml('docker-compose.yml')
