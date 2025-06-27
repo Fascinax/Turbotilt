@@ -9,12 +9,19 @@ import (
 
 // Options contient les paramètres de configuration pour la génération des fichiers
 type Options struct {
-	Framework  string
-	AppName    string // Nom de l'application
-	Port       string
-	JDKVersion string
-	DevMode    bool
-	Services   []scan.ServiceConfig // Services dépendants détectés
+	ServiceName string               // Nom du service (pour les projets multi-services)
+	Framework   string               // Framework (spring, quarkus, etc.)
+	AppName     string               // Nom de l'application
+	Port        string               // Port exposé
+	JDKVersion  string               // Version JDK
+	DevMode     bool                 // Mode développement
+	Path        string               // Chemin du service (pour les projets multi-services)
+	Services    []scan.ServiceConfig // Services dépendants détectés
+}
+
+// ServiceList contient la liste des services pour la génération des fichiers multi-services
+type ServiceList struct {
+	Services []Options // Liste des services applicatifs
 }
 
 // GenerateDockerfile génère un Dockerfile adapté au framework détecté

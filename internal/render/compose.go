@@ -27,13 +27,24 @@ func GenerateComposeWithServices(opts Options) error {
 	}
 	defer f.Close()
 
+	// Déterminer le chemin du service
+	servicePath := "."
+	if opts.Path != "" && opts.Path != "." {
+		servicePath = opts.Path
+	}
+
 	// Service principal de l'application
+	appName := "app"
+	if opts.ServiceName != "" {
+		appName = opts.ServiceName
+	}
+
 	appService := ComposeServiceDefinition{
-		Name:  "app",
-		Image: "build: .",
+		Name:  appName,
+		Image: fmt.Sprintf("build: %s", servicePath),
 		Port:  fmt.Sprintf("%s:%s", opts.Port, opts.Port),
 		Volumes: []string{
-			"./src:/app/src",
+			fmt.Sprintf("%s/src:/app/src", servicePath),
 		},
 		Environment: make(map[string]string),
 	}
@@ -240,4 +251,82 @@ func getFromCredentials(credentials map[string]string, key, defaultValue string)
 		return value
 	}
 	return defaultValue
+}
+
+// GenerateMultiServiceCompose génère un docker-compose.yml pour un projet multi-services déclaré dans le manifeste
+func GenerateMultiServiceCompose(serviceList ServiceList) error {
+	f, err := os.Create("docker-compose.yml")
+	if err != nil {
+		return fmt.Errorf("erreur lors de la création du docker-compose.yml: %w", err)
+	}
+	defer f.Close()
+
+	// Construire le contenu du fichier docker-compose.yml
+	var sb strings.Builder
+	sb.WriteString("version: '3'\n\nservices:\n")
+
+	// Ajouter tous les services applicatifs
+	for _, opts := range serviceList.Services {
+		// Ignorer les services non-applicatifs (sans runtime)
+		if opts.Framework == "" {
+			continue
+		}
+
+		appName := opts.ServiceName
+		if appName == "" {
+			appName = "app"
+		}
+
+		// Déterminer le chemin du service
+		servicePath := "."
+		if opts.Path != "" {
+			servicePath = opts.Path
+		}
+
+		// Ajouter le service
+		sb.WriteString(fmt.Sprintf("  %s:\n", appName))
+		sb.WriteString(fmt.Sprintf("    build: %s\n", servicePath))
+		sb.WriteString("    ports:\n")
+		sb.WriteString(fmt.Sprintf("      - '%s:%s'\n", opts.Port, opts.Port))
+		sb.WriteString("    volumes:\n")
+		sb.WriteString(fmt.Sprintf("      - '%s:/app'\n", servicePath))
+
+		// Variables d'environnement selon le framework
+		sb.WriteString("    environment:\n")
+		switch opts.Framework {
+		case "spring":
+			envValue := "prod"
+			if opts.DevMode {
+				envValue = "dev"
+			}
+			sb.WriteString(fmt.Sprintf("      - SPRING_PROFILES_ACTIVE=%s\n", envValue))
+		case "quarkus":
+			envValue := "prod"
+			if opts.DevMode {
+				envValue = "dev"
+			}
+			sb.WriteString(fmt.Sprintf("      - QUARKUS_PROFILE=%s\n", envValue))
+		case "micronaut":
+			envValue := "prod"
+			if opts.DevMode {
+				envValue = "dev"
+			}
+			sb.WriteString(fmt.Sprintf("      - MICRONAUT_ENVIRONMENTS=%s\n", envValue))
+		default:
+			sb.WriteString("      # Add your specific environment variables here\n")
+		}
+
+		sb.WriteString("\n")
+	}
+
+	// TODO: Ajouter les services dépendants (MySQL, Redis, etc.) détectés
+	// Cette partie sera similaire à GenerateComposeWithServices mais en utilisant
+	// les services dépendants déclarés dans le manifeste
+
+	// Ajouter les volumes (pour les services dépendants)
+	// Note: à compléter avec les volumes des services dépendants
+
+	// Écrire le contenu dans le fichier
+	_, err = f.WriteString(sb.String())
+	return err
 }

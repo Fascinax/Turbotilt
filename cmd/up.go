@@ -8,8 +8,9 @@ import (
 )
 
 var (
-	useTilt  bool
-	detached bool
+	useTilt     bool
+	detached    bool
+	serviceName string
 )
 
 var upCmd = &cobra.Command{
@@ -20,9 +21,10 @@ var upCmd = &cobra.Command{
 
 		// Définir les options d'exécution
 		opts := runtime.RunOptions{
-			UseTilt:   useTilt,
-			Detached:  detached,
-			TempFiles: []string{"Dockerfile", "docker-compose.yml", "Tiltfile"},
+			UseTilt:     useTilt,
+			Detached:    detached,
+			TempFiles:   []string{"Dockerfile", "docker-compose.yml", "Tiltfile"},
+			ServiceName: serviceName,
 		}
 
 		var err error
@@ -48,5 +50,6 @@ func init() {
 
 	// Flags pour la commande up
 	upCmd.Flags().BoolVarP(&useTilt, "tilt", "t", true, "Utiliser Tilt (si false, utilise Docker Compose)")
+	upCmd.Flags().StringVarP(&serviceName, "service", "s", "", "Démarrer un service spécifique du manifeste (compatible avec les projets multi-services)")
 	upCmd.Flags().BoolVarP(&detached, "detach", "d", false, "Exécution en arrière-plan (uniquement pour Docker Compose)")
 }

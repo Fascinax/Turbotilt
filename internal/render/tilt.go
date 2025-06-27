@@ -1,6 +1,7 @@
 package render
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"text/template"
@@ -15,9 +16,10 @@ type TiltfileTemplateData struct {
 	Date       string
 	DevMode    bool
 	Services   []interface{}
+	IsMultiService bool // Indique s'il s'agit d'un projet multi-services
 }
 
-// GenerateTiltfile génère un Tiltfile personnalisé pour le projet
+// GenerateTiltfile génère un Tiltfile personnalisé pour le projet mono-service
 func GenerateTiltfile(opts Options) error {
 	f, err := os.Create("Tiltfile")
 	if err != nil {
@@ -57,12 +59,13 @@ func GenerateTiltfile(opts Options) error {
 	}
 	
 	data := TiltfileTemplateData{
-		Framework:  opts.Framework,
-		AppName:    appName,
-		Port:       port,
-		Date:       time.Now().Format("2006-01-02 15:04:05"),
-		DevMode:    opts.DevMode,
-		Services:   services,
+		Framework:     opts.Framework,
+		AppName:       appName,
+		Port:          port,
+		Date:          time.Now().Format("2006-01-02 15:04:05"),
+		DevMode:       opts.DevMode,
+		Services:      services,
+		IsMultiService: false,
 	}
 	
 	// Charger le template depuis le fichier
@@ -79,6 +82,61 @@ func GenerateTiltfile(opts Options) error {
 	}
 	
 	return nil
+}
+
+// GenerateMultiServiceTiltfile génère un Tiltfile pour un projet multi-services
+func GenerateMultiServiceTiltfile(serviceList ServiceList) error {
+	f, err := os.Create("Tiltfile")
+	if err != nil {
+		return fmt.Errorf("erreur création Tiltfile: %w", err)
+	}
+	defer f.Close()
+
+	// Définir des délimiteurs personnalisés pour éviter les conflits avec la syntaxe Tilt
+	funcMap := template.FuncMap{
+		"eq": func(a, b interface{}) bool {
+			return a == b
+		},
+	}
+	
+	// Créer des données combinées pour tous les services
+	services := make([]map[string]interface{}, len(serviceList.Services))
+	for i, svc := range serviceList.Services {
+		services[i] = map[string]interface{}{
+			"Name":     svc.ServiceName,
+			"Path":     svc.Path,
+			"Framework": svc.Framework,
+			"Port":     svc.Port,
+			"DevMode":  svc.DevMode,
+			"JDKVersion": svc.JDKVersion,
+		}
+	}
+	
+	data := TiltfileTemplateData{
+		Date:          time.Now().Format("2006-01-02 15:04:05"),
+		Services:      []interface{}{services},
+		IsMultiService: true,
+	}
+	
+	// Utiliser un template spécifique pour les projets multi-services
+	tmplPath := "templates/Tiltfile.multi.tmpl"
+	if _, err := os.Stat(tmplPath); os.IsNotExist(err) {
+		// Utiliser le template standard s'il n'y a pas de template multi-service
+		tmplPath = "templates/Tiltfile.tmpl"
+	}
+	
+	tmpl, err := template.New("Tiltfile").Delims("[[", "]]").Funcs(funcMap).ParseFiles(tmplPath)
+	if err != nil {
+		return fmt.Errorf("erreur parsing template: %w", err)
+	}
+	
+	err = tmpl.Execute(f, data)
+	if err != nil {
+		return fmt.Errorf("erreur exécution template: %w", err)
+	}
+	
+	return nil
+}
 
 k8s_yaml('docker-compose.yml')
 `

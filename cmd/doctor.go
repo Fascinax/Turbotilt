@@ -7,6 +7,7 @@ import (
 	"runtime"
 	"strings"
 	"time"
+	"turbotilt/internal/config"
 	"turbotilt/internal/logger"
 
 	"github.com/spf13/cobra"
@@ -22,11 +23,12 @@ type diagResult struct {
 }
 
 var (
-	verbose     bool
-	logToFile   bool
-	showAllInfo bool
-	showSummary bool
-	logFilePath string
+	verbose          bool
+	logToFile        bool
+	showAllInfo      bool
+	showSummary      bool
+	logFilePath      string
+	validateManifest bool
 )
 
 var doctorCmd = &cobra.Command{
@@ -43,6 +45,13 @@ Fournit un score de santé et des recommandations pour réparer les problèmes.`
 		if verbose {
 			logger.SetLevel(logger.DEBUG)
 			logger.Debug("Mode verbeux activé")
+		}
+
+		// Si l'option validate-manifest est activée, valider uniquement le manifeste sans faire le reste du diagnostic
+		if validateManifest {
+			// Importer le package config
+			validateManifestFile()
+			return
 		}
 
 		// Configurer le chemin du fichier de log si non spécifié
@@ -385,6 +394,48 @@ func checkProjectFiles() map[string][]string {
 	return foundFiles
 }
 
+// validateManifestFile valide le fichier manifeste turbotilt.yaml
+func validateManifestFile() {
+	fmt.Println("🔍 Validation du manifeste...")
+
+	// Rechercher le manifeste
+	configPath, isManifest, err := config.FindConfiguration()
+	if err != nil || !isManifest {
+		fmt.Println("❌ Manifeste turbotilt.yaml introuvable")
+		return
+	}
+
+	fmt.Printf("📄 Manifeste trouvé: %s\n", configPath)
+
+	// Charger et valider le manifeste
+	manifest, err := config.LoadManifest(configPath)
+	if err != nil {
+		fmt.Printf("❌ Erreur de validation: %v\n", err)
+		return
+	}
+
+	// Afficher un résumé du manifeste
+	fmt.Println("✅ Le manifeste est valide!")
+	fmt.Printf("📊 Contient %d service(s):\n", len(manifest.Services))
+
+	// Afficher les détails des services
+	for i, service := range manifest.Services {
+		fmt.Printf("   [%d] %s\n", i+1, service.Name)
+
+		if service.Runtime != "" {
+			fmt.Printf("       - Type: Application (%s)\n", service.Runtime)
+			fmt.Printf("       - Path: %s\n", service.Path)
+			fmt.Printf("       - Port: %s\n", service.Port)
+			fmt.Printf("       - Java: %s\n", service.Java)
+		} else if service.Type != "" {
+			fmt.Printf("       - Type: Service dépendant (%s)\n", service.Type)
+			if service.Version != "" {
+				fmt.Printf("       - Version: %s\n", service.Version)
+			}
+		}
+	}
+}
+
 func init() {
 	rootCmd.AddCommand(doctorCmd)
 
@@ -393,4 +444,5 @@ func init() {
 	doctorCmd.Flags().StringVar(&logFilePath, "log-file", "", "Chemin du fichier log à utiliser")
 	doctorCmd.Flags().BoolVar(&showAllInfo, "all", false, "Afficher toutes les informations")
 	doctorCmd.Flags().BoolVar(&showSummary, "summary", false, "Afficher uniquement le résumé")
+	doctorCmd.Flags().BoolVar(&validateManifest, "validate-manifest", false, "Valider la syntaxe du manifeste turbotilt.yaml")
 }

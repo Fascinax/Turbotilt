@@ -8,9 +8,10 @@ import (
 
 // Options pour l'exécution
 type RunOptions struct {
-	UseTilt   bool
-	Detached  bool
-	TempFiles []string
+	UseTilt     bool
+	Detached    bool
+	TempFiles   []string
+	ServiceName string // Nom du service à démarrer (pour les projets multi-services)
 }
 
 // TiltUp lance Tilt avec les options spécifiées
@@ -45,6 +46,12 @@ func ComposeUp(opts RunOptions) error {
 
 	if opts.Detached {
 		args = append(args, "-d")
+	}
+
+	// Si un service spécifique est demandé
+	if opts.ServiceName != "" {
+		fmt.Printf("🔍 Démarrage du service spécifique: %s\n", opts.ServiceName)
+		args = append(args, opts.ServiceName)
 	}
 
 	cmd := exec.Command("docker", args...)
