@@ -1,0 +1,13 @@
+# Multi-service Tiltfile généré par Turbotilt
+# Date: [[.Date]]
+
+# Ce Tiltfile gère plusieurs services dans un projet
+
+# Utiliser docker-compose comme base pour tous les services
+docker_compose('docker-compose.yml')
+
+# Configuration des services
+[[range .Services]]
+# Service: api
+# Service: auth
+[[end]]

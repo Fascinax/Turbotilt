@@ -2,6 +2,7 @@ package render
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"text/template"
 	"turbotilt/internal/scan"
@@ -24,6 +25,115 @@ type ServiceList struct {
 	Services []Options // Liste des services applicatifs
 }
 
+// DockerfileRenderer définit une interface pour la génération de Dockerfiles
+type DockerfileRenderer interface {
+	RenderSpringDockerfile(w io.Writer, opts Options) error
+	RenderQuarkusDockerfile(w io.Writer, opts Options) error
+	RenderMicronautDockerfile(w io.Writer, opts Options) error
+	RenderJavaDockerfile(w io.Writer, opts Options) error
+	RenderGenericDockerfile(w io.Writer, opts Options) error
+}
+
+// DefaultDockerfileRenderer est l'implémentation par défaut de DockerfileRenderer
+type DefaultDockerfileRenderer struct{}
+
+// RenderSpringDockerfile écrit un Dockerfile pour Spring Boot
+func (r *DefaultDockerfileRenderer) RenderSpringDockerfile(w io.Writer, opts Options) error {
+	tmpl := `FROM eclipse-temurin:{{.JDKVersion}} AS build
+WORKDIR /app
+COPY . .
+RUN ./mvnw package {{if .DevMode}}-DskipTests{{end}}
+
+FROM eclipse-temurin:{{.JDKVersion}}
+WORKDIR /app
+COPY --from=build /app/target/*.jar app.jar
+EXPOSE {{.Port}}
+CMD ["java", "-jar", "app.jar"]
+`
+	t, err := template.New("spring").Parse(tmpl)
+	if err != nil {
+		return err
+	}
+	return t.Execute(w, opts)
+}
+
+// RenderQuarkusDockerfile écrit un Dockerfile pour Quarkus
+func (r *DefaultDockerfileRenderer) RenderQuarkusDockerfile(w io.Writer, opts Options) error {
+	tmpl := `FROM registry.access.redhat.com/ubi8/openjdk-{{.JDKVersion}}:latest AS build
+WORKDIR /app
+COPY . .
+RUN ./mvnw package {{if .DevMode}}-DskipTests{{end}} -Dquarkus.package.type=jar
+
+FROM registry.access.redhat.com/ubi8/openjdk-{{.JDKVersion}}:latest
+WORKDIR /app
+COPY --from=build /app/target/quarkus-app/lib/ /deployments/lib/
+COPY --from=build /app/target/quarkus-app/*.jar /deployments/
+COPY --from=build /app/target/quarkus-app/app/ /deployments/app/
+COPY --from=build /app/target/quarkus-app/quarkus/ /deployments/quarkus/
+EXPOSE {{.Port}}
+CMD ["java", "-jar", "/deployments/quarkus-run.jar"]
+`
+	t, err := template.New("quarkus").Parse(tmpl)
+	if err != nil {
+		return err
+	}
+	return t.Execute(w, opts)
+}
+
+// RenderMicronautDockerfile écrit un Dockerfile pour Micronaut
+func (r *DefaultDockerfileRenderer) RenderMicronautDockerfile(w io.Writer, opts Options) error {
+	tmpl := `FROM eclipse-temurin:{{.JDKVersion}} AS build
+WORKDIR /app
+COPY . .
+RUN ./gradlew build {{if .DevMode}}-x test{{end}}
+
+FROM eclipse-temurin:{{.JDKVersion}}
+WORKDIR /app
+COPY --from=build /app/build/libs/*-all.jar app.jar
+EXPOSE {{.Port}}
+CMD ["java", "-jar", "app.jar"]
+`
+	t, err := template.New("micronaut").Parse(tmpl)
+	if err != nil {
+		return err
+	}
+	return t.Execute(w, opts)
+}
+
+// RenderJavaDockerfile écrit un Dockerfile pour une application Java générique
+func (r *DefaultDockerfileRenderer) RenderJavaDockerfile(w io.Writer, opts Options) error {
+	tmpl := `FROM eclipse-temurin:{{.JDKVersion}}
+WORKDIR /app
+COPY . .
+RUN javac Main.java
+EXPOSE {{.Port}}
+CMD ["java", "Main"]
+`
+	t, err := template.New("java").Parse(tmpl)
+	if err != nil {
+		return err
+	}
+	return t.Execute(w, opts)
+}
+
+// RenderGenericDockerfile écrit un Dockerfile générique pour les autres types d'applications
+func (r *DefaultDockerfileRenderer) RenderGenericDockerfile(w io.Writer, opts Options) error {
+	tmpl := `FROM alpine:latest
+WORKDIR /app
+COPY . .
+EXPOSE {{.Port}}
+CMD ["sh", "start.sh"]
+`
+	t, err := template.New("generic").Parse(tmpl)
+	if err != nil {
+		return err
+	}
+	return t.Execute(w, opts)
+}
+
+// defaultRenderer est l'instance par défaut du rendu
+var defaultRenderer DockerfileRenderer = &DefaultDockerfileRenderer{}
+
 // GenerateDockerfile génère un Dockerfile adapté au framework détecté
 func GenerateDockerfile(opts Options) error {
 	f, err := os.Create("Dockerfile")
@@ -34,15 +144,15 @@ func GenerateDockerfile(opts Options) error {
 
 	switch opts.Framework {
 	case "spring":
-		return writeSpringDockerfile(f, opts)
+		return defaultRenderer.RenderSpringDockerfile(f, opts)
 	case "quarkus":
-		return writeQuarkusDockerfile(f, opts)
+		return defaultRenderer.RenderQuarkusDockerfile(f, opts)
 	case "micronaut":
-		return writeMicronautDockerfile(f, opts)
+		return defaultRenderer.RenderMicronautDockerfile(f, opts)
 	case "java":
-		return writeJavaDockerfile(f, opts)
+		return defaultRenderer.RenderJavaDockerfile(f, opts)
 	default:
-		return writeGenericDockerfile(f, opts)
+		return defaultRenderer.RenderGenericDockerfile(f, opts)
 	}
 }
 
@@ -78,103 +188,6 @@ services:
 {{end}}
 `
 	t, err := template.New("compose").Parse(tmpl)
-	if err != nil {
-		return err
-	}
-
-	return t.Execute(f, opts)
-}
-
-// writeSpringDockerfile écrit un Dockerfile pour Spring Boot
-func writeSpringDockerfile(f *os.File, opts Options) error {
-	tmpl := `FROM eclipse-temurin:{{.JDKVersion}} AS build
-WORKDIR /app
-COPY . .
-RUN ./mvnw package {{if .DevMode}}-DskipTests{{end}}
-
-FROM eclipse-temurin:{{.JDKVersion}}
-WORKDIR /app
-COPY --from=build /app/target/*.jar app.jar
-EXPOSE {{.Port}}
-CMD ["java", "-jar", "app.jar"]
-`
-	t, err := template.New("dockerfile").Parse(tmpl)
-	if err != nil {
-		return err
-	}
-
-	return t.Execute(f, opts)
-}
-
-// writeQuarkusDockerfile écrit un Dockerfile pour Quarkus
-func writeQuarkusDockerfile(f *os.File, opts Options) error {
-	tmpl := `FROM quay.io/quarkus/ubi-quarkus-native-image:22.3-java{{.JDKVersion}} AS build
-WORKDIR /app
-COPY . .
-RUN ./mvnw package -Pnative {{if .DevMode}}-DskipTests{{end}}
-
-FROM quay.io/quarkus/quarkus-micro-image:2.0
-WORKDIR /app
-COPY --from=build /app/target/*-runner /app/application
-EXPOSE {{.Port}}
-CMD ["./application", "-Dquarkus.http.host=0.0.0.0"]
-`
-	t, err := template.New("dockerfile").Parse(tmpl)
-	if err != nil {
-		return err
-	}
-
-	return t.Execute(f, opts)
-}
-
-// writeMicronautDockerfile écrit un Dockerfile pour Micronaut
-func writeMicronautDockerfile(f *os.File, opts Options) error {
-	tmpl := `FROM eclipse-temurin:{{.JDKVersion}} AS build
-WORKDIR /app
-COPY . .
-RUN ./gradlew build {{if .DevMode}}-x test{{end}}
-
-FROM eclipse-temurin:{{.JDKVersion}}
-WORKDIR /app
-COPY --from=build /app/build/libs/*.jar app.jar
-EXPOSE {{.Port}}
-CMD ["java", "-jar", "app.jar"]
-`
-	t, err := template.New("dockerfile").Parse(tmpl)
-	if err != nil {
-		return err
-	}
-
-	return t.Execute(f, opts)
-}
-
-// writeJavaDockerfile écrit un Dockerfile générique pour Java
-func writeJavaDockerfile(f *os.File, opts Options) error {
-	tmpl := `FROM eclipse-temurin:{{.JDKVersion}}
-WORKDIR /app
-COPY . .
-RUN ./mvnw package {{if .DevMode}}-DskipTests{{end}}
-EXPOSE {{.Port}}
-CMD ["java", "-jar", "target/*.jar"]
-`
-	t, err := template.New("dockerfile").Parse(tmpl)
-	if err != nil {
-		return err
-	}
-
-	return t.Execute(f, opts)
-}
-
-// writeGenericDockerfile écrit un Dockerfile générique
-func writeGenericDockerfile(f *os.File, opts Options) error {
-	tmpl := `# Dockerfile générique
-FROM alpine:latest
-WORKDIR /app
-COPY . .
-EXPOSE {{.Port}}
-CMD ["echo", "Veuillez configurer ce Dockerfile pour votre application"]
-`
-	t, err := template.New("dockerfile").Parse(tmpl)
 	if err != nil {
 		return err
 	}

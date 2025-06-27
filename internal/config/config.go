@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"turbotilt/internal/render"
 
 	"gopkg.in/yaml.v3"
 )
@@ -238,12 +239,12 @@ func GenerateManifestFromConfig(config Config) Manifest {
 }
 
 // ConvertManifestToRenderOptions convertit un service du manifeste en options de rendu
-func ConvertManifestToRenderOptions(service ManifestService) (*Options, error) {
+func ConvertManifestToRenderOptions(service ManifestService) (*render.Options, error) {
 	if service.Runtime == "" {
 		return nil, fmt.Errorf("service '%s' n'est pas un service applicatif (pas de runtime spécifié)", service.Name)
 	}
 
-	opts := &Options{
+	opts := &render.Options{
 		ServiceName: service.Name,
 		AppName:     service.Name,
 		Framework:   service.Runtime,

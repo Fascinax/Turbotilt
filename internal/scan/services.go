@@ -129,13 +129,60 @@ func detectFromPropertiesFile(path string) ([]ServiceConfig, error) {
 func detectFromYamlFile(path string) ([]ServiceConfig, error) {
 	var services []ServiceConfig
 
-	// Même logique que pour les fichiers properties mais avec une syntaxe YAML
-	// Par exemple:
-	// spring:
-	//   datasource:
-	//     url: jdbc:mysql://localhost:3306/db
+	// Simplification: nous allons juste rechercher des chaînes dans le fichier YAML
+	// comme première implémentation, même si ce n'est pas robuste
+	content, err := os.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
 
-	// Pour l'instant, renvoyer une liste vide
+	contentStr := string(content)
+
+	// Détection PostgreSQL
+	if strings.Contains(contentStr, "jdbc:postgresql") {
+		services = append(services, ServiceConfig{
+			Type:    PostgreSQL,
+			Version: "latest",
+			Port:    "5432",
+			Credentials: map[string]string{
+				"POSTGRES_USER":     "postgres",
+				"POSTGRES_PASSWORD": "postgres",
+				"POSTGRES_DB":       "app",
+			},
+		})
+	}
+
+	// Détection MySQL
+	if strings.Contains(contentStr, "jdbc:mysql") {
+		services = append(services, ServiceConfig{
+			Type:    MySQL,
+			Version: "latest",
+			Port:    "3306",
+			Credentials: map[string]string{
+				"MYSQL_ROOT_PASSWORD": "root",
+				"MYSQL_DATABASE":      "app",
+			},
+		})
+	}
+
+	// Détection MongoDB
+	if strings.Contains(contentStr, "mongodb://") {
+		services = append(services, ServiceConfig{
+			Type:    MongoDB,
+			Version: "latest",
+			Port:    "27017",
+		})
+	}
+
+	// Détection Redis
+	if strings.Contains(contentStr, "redis://") || strings.Contains(contentStr, "spring.redis") {
+		services = append(services, ServiceConfig{
+			Type:    Redis,
+			Version: "latest",
+			Port:    "6379",
+		})
+	}
+
 	return services, nil
 }
 

@@ -179,6 +179,23 @@ services:
 
 ---
 
+## 🧪 Tests
+
+Le projet inclut une suite de tests unitaires. Pour les exécuter :
+
+```powershell
+# Exécuter tous les tests
+go test ./...
+
+# Ou avec le Makefile
+make test
+
+# Générer un rapport de couverture
+make coverage
+```
+
+Pour plus d'informations sur les tests, consultez [TESTING.md](TESTING.md).
+
 ## 🤝 Contribution
 
 Les contributions sont les bienvenues ! N'hésitez pas à ouvrir des issues ou des pull requests.
