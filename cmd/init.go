@@ -239,7 +239,7 @@ func init() {
 	// Flags pour la commande init
 	initCmd.Flags().StringVarP(&forceFramework, "framework", "f", "", "Spécifier manuellement le framework (spring, quarkus, java)")
 	initCmd.Flags().StringVarP(&port, "port", "p", "8080", "Port à exposer pour l'application")
-	initCmd.Flags().StringVarP(&jdkVersion, "jdk", "j", "17", "Version du JDK à utiliser")
+	initCmd.Flags().StringVarP(&jdkVersion, "jdk", "j", "11", "Version du JDK à utiliser")
 	initCmd.Flags().BoolVarP(&devMode, "dev", "d", true, "Activer les configurations de développement")
 	initCmd.Flags().BoolVarP(&detectServices, "services", "s", true, "Détecter et configurer les services dépendants (MySQL, PostgreSQL, etc.)")
 	initCmd.Flags().BoolVarP(&generateManifest, "generate-manifest", "g", false, "Générer un manifeste turbotilt.yaml à partir de la détection")
