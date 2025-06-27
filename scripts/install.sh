@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Script d'installation pour Turbotilt
-# Usage: curl -fsSL https://raw.githubusercontent.com/VOTRE_UTILISATEUR/turbotilt/main/scripts/install.sh | bash
+# Usage: curl -fsSL https://raw.githubusercontent.com/Fascinax/turbotilt/main/scripts/install.sh | bash
 
 set -e
 
@@ -47,7 +47,7 @@ echo -e "${BLUE}Détection: ${OS}-${ARCH}${NC}"
 
 # Get latest release info from GitHub
 echo -e "${YELLOW}Récupération des informations de la dernière version...${NC}"
-GITHUB_REPO="VOTRE_UTILISATEUR/turbotilt"
+GITHUB_REPO="Fascinax/turbotilt"
 LATEST_RELEASE_URL="https://api.github.com/repos/${GITHUB_REPO}/releases/latest"
 LATEST_VERSION=$(curl -sL ${LATEST_RELEASE_URL} | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
 

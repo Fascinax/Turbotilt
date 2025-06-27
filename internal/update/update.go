@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	githubAPI      = "https://api.github.com/repos/YOUR_USERNAME/turbotilt/releases/latest"
+	githubAPI      = "https://api.github.com/repos/Fascinax/turbotilt/releases/latest"
 	updateCheckTTL = 24 * time.Hour
 )
 

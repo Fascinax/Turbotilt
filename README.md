@@ -35,15 +35,15 @@ brew install turbotilt
 
 ```bash
 # macOS et Linux
-curl -fsSL https://raw.githubusercontent.com/VOTRE_UTILISATEUR/turbotilt/main/scripts/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/Fascinax/turbotilt/main/scripts/install.sh | bash
 
 # Windows PowerShell
-iwr -useb https://raw.githubusercontent.com/VOTRE_UTILISATEUR/turbotilt/main/scripts/install.ps1 | iex
+iwr -useb https://raw.githubusercontent.com/Fascinax/turbotilt/main/scripts/install.ps1 | iex
 ```
 
 ### Téléchargement direct
 
-Téléchargez la dernière version depuis la [page des releases](https://github.com/VOTRE_UTILISATEUR/turbotilt/releases).
+Téléchargez la dernière version depuis la [page des releases](https://github.com/Fascinax/turbotilt/releases).
 
 ## 🚀 Fonctionnalités avancées
 
@@ -102,7 +102,7 @@ turbotilt/
 
 ```bash
 # Cloner le repository
-git clone https://github.com/votre-nom/turbotilt.git
+git clone https://github.com/Fascinax/turbotilt.git
 cd turbotilt
 
 # Compiler l'application

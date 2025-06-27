@@ -1,10 +1,10 @@
 # PowerShell script d'installation pour Turbotilt
-# Usage: iwr -useb https://raw.githubusercontent.com/VOTRE_UTILISATEUR/turbotilt/main/scripts/install.ps1 | iex
+# Usage: iwr -useb https://raw.githubusercontent.com/Fascinax/turbotilt/main/scripts/install.ps1 | iex
 
 $ErrorActionPreference = 'Stop'
 
 # Variables de configuration
-$GithubRepo = "VOTRE_UTILISATEUR/turbotilt"
+$GithubRepo = "Fascinax/turbotilt"
 $BinaryName = "turbotilt.exe"
 $InstallDir = "$env:LOCALAPPDATA\Turbotilt"
 

@@ -18,10 +18,10 @@ TEMP_DIR=$(mktemp -d)
 cd $TEMP_DIR
 
 echo "Téléchargement des archives..."
-curl -sL "https://github.com/VOTRE_UTILISATEUR/turbotilt/releases/download/v${VERSION}/turbotilt-${VERSION}-darwin-amd64.zip" -o darwin-amd64.zip
-curl -sL "https://github.com/VOTRE_UTILISATEUR/turbotilt/releases/download/v${VERSION}/turbotilt-${VERSION}-darwin-arm64.zip" -o darwin-arm64.zip
-curl -sL "https://github.com/VOTRE_UTILISATEUR/turbotilt/releases/download/v${VERSION}/turbotilt-${VERSION}-linux-amd64.zip" -o linux-amd64.zip
-curl -sL "https://github.com/VOTRE_UTILISATEUR/turbotilt/releases/download/v${VERSION}/turbotilt-${VERSION}-linux-arm64.zip" -o linux-arm64.zip
+curl -sL "https://github.com/Fascinax/turbotilt/releases/download/v${VERSION}/turbotilt-${VERSION}-darwin-amd64.zip" -o darwin-amd64.zip
+curl -sL "https://github.com/Fascinax/turbotilt/releases/download/v${VERSION}/turbotilt-${VERSION}-darwin-arm64.zip" -o darwin-arm64.zip
+curl -sL "https://github.com/Fascinax/turbotilt/releases/download/v${VERSION}/turbotilt-${VERSION}-linux-amd64.zip" -o linux-amd64.zip
+curl -sL "https://github.com/Fascinax/turbotilt/releases/download/v${VERSION}/turbotilt-${VERSION}-linux-arm64.zip" -o linux-arm64.zip
 
 # Calculer les checksums
 DARWIN_AMD64_SHA=$(shasum -a 256 darwin-amd64.zip | awk '{print $1}')
