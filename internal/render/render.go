@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"text/template"
+	"turbotilt/internal/scan"
 )
 
 // Options contient les paramètres de configuration pour la génération des fichiers
@@ -12,6 +13,7 @@ type Options struct {
 	Port        string
 	JDKVersion  string
 	DevMode     bool
+	Services    []scan.ServiceConfig // Services dépendants détectés
 }
 
 // GenerateDockerfile génère un Dockerfile adapté au framework détecté
@@ -57,6 +59,14 @@ services:
 {{else if eq .Framework "quarkus"}}      - QUARKUS_PROFILE={{if .DevMode}}dev{{else}}prod{{end}}
 {{else if eq .Framework "micronaut"}}      - MICRONAUT_ENVIRONMENTS={{if .DevMode}}dev{{else}}prod{{end}}
 {{else}}      # Ajoutez vos variables d'environnement spécifiques ici
+{{end}}
+{{range .Services}}
+  {{.Name}}:
+    image: {{.Image}}
+    ports:
+      - '{{.Port}}'
+    environment:
+      - SPRING_PROFILES_ACTIVE={{if $.DevMode}}dev{{else}}prod{{end}}
 {{end}}
 `
 	t, err := template.New("compose").Parse(tmpl)

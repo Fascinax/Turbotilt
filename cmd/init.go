@@ -13,6 +13,7 @@ var (
 	port           string
 	jdkVersion     string
 	devMode        bool
+	detectServices bool
 )
 
 var initCmd = &cobra.Command{
@@ -35,12 +36,33 @@ var initCmd = &cobra.Command{
 
 		fmt.Printf("✅ Framework détecté/sélectionné: %s\n", framework)
 
+		// Détecter les services si demandé
+		var services []scan.ServiceConfig
+		if detectServices {
+			fmt.Println("🔍 Détection des services dépendants...")
+			services, err = scan.DetectServices()
+			if err != nil {
+				fmt.Printf("⚠️ Avertissement lors de la détection des services: %v\n", err)
+			}
+			
+			// Afficher les services détectés
+			if len(services) > 0 {
+				fmt.Println("✅ Services détectés:")
+				for _, service := range services {
+					fmt.Printf("   - %s\n", service.Type)
+				}
+			} else {
+				fmt.Println("ℹ️ Aucun service dépendant détecté")
+			}
+		}
+
 		// Préparer les options de rendu
 		renderOpts := render.Options{
 			Framework:   framework,
 			Port:        port,
 			JDKVersion:  jdkVersion,
 			DevMode:     devMode,
+			Services:    services,
 		}
 
 		// Générer les fichiers
@@ -49,9 +71,17 @@ var initCmd = &cobra.Command{
 			return
 		}
 
-		if err := render.GenerateCompose(renderOpts); err != nil {
-			fmt.Printf("❌ Erreur lors de la génération du docker-compose.yml: %v\n", err)
-			return
+		// Utiliser le nouveau générateur de docker-compose avec support des services
+		if len(services) > 0 {
+			if err := render.GenerateComposeWithServices(renderOpts, services); err != nil {
+				fmt.Printf("❌ Erreur lors de la génération du docker-compose.yml: %v\n", err)
+				return
+			}
+		} else {
+			if err := render.GenerateCompose(renderOpts); err != nil {
+				fmt.Printf("❌ Erreur lors de la génération du docker-compose.yml: %v\n", err)
+				return
+			}
 		}
 
 		if err := render.GenerateTiltfile(renderOpts); err != nil {
@@ -76,4 +106,5 @@ func init() {
 	initCmd.Flags().StringVarP(&port, "port", "p", "8080", "Port à exposer pour l'application")
 	initCmd.Flags().StringVarP(&jdkVersion, "jdk", "j", "17", "Version du JDK à utiliser")
 	initCmd.Flags().BoolVarP(&devMode, "dev", "d", true, "Activer les configurations de développement")
+	initCmd.Flags().BoolVarP(&detectServices, "services", "s", true, "Détecter et configurer les services dépendants (MySQL, PostgreSQL, etc.)")
 }
