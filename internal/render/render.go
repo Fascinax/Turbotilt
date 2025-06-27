@@ -9,11 +9,12 @@ import (
 
 // Options contient les paramètres de configuration pour la génération des fichiers
 type Options struct {
-	Framework   string
-	Port        string
-	JDKVersion  string
-	DevMode     bool
-	Services    []scan.ServiceConfig // Services dépendants détectés
+	Framework  string
+	AppName    string // Nom de l'application
+	Port       string
+	JDKVersion string
+	DevMode    bool
+	Services   []scan.ServiceConfig // Services dépendants détectés
 }
 
 // GenerateDockerfile génère un Dockerfile adapté au framework détecté
@@ -73,7 +74,7 @@ services:
 	if err != nil {
 		return err
 	}
-	
+
 	return t.Execute(f, opts)
 }
 
@@ -94,7 +95,7 @@ CMD ["java", "-jar", "app.jar"]
 	if err != nil {
 		return err
 	}
-	
+
 	return t.Execute(f, opts)
 }
 
@@ -115,7 +116,7 @@ CMD ["./application", "-Dquarkus.http.host=0.0.0.0"]
 	if err != nil {
 		return err
 	}
-	
+
 	return t.Execute(f, opts)
 }
 
@@ -136,7 +137,7 @@ CMD ["java", "-jar", "app.jar"]
 	if err != nil {
 		return err
 	}
-	
+
 	return t.Execute(f, opts)
 }
 
@@ -153,7 +154,7 @@ CMD ["java", "-jar", "target/*.jar"]
 	if err != nil {
 		return err
 	}
-	
+
 	return t.Execute(f, opts)
 }
 
@@ -170,6 +171,6 @@ CMD ["echo", "Veuillez configurer ce Dockerfile pour votre application"]
 	if err != nil {
 		return err
 	}
-	
+
 	return t.Execute(f, opts)
 }

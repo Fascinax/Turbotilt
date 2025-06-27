@@ -1,9 +1,10 @@
 package config
 
 import (
-	"gopkg.in/yaml.v3"
 	"os"
 	"path/filepath"
+
+	"gopkg.in/yaml.v3"
 )
 
 // Config représente la configuration de Turbotilt
@@ -24,21 +25,21 @@ type ProjectConfig struct {
 
 // FrameworkConfig contient les informations sur le framework utilisé
 type FrameworkConfig struct {
-	Type    string `yaml:"type"`    // spring, quarkus, micronaut, etc.
-	Version string `yaml:"version,omitempty"`
+	Type       string `yaml:"type"` // spring, quarkus, micronaut, etc.
+	Version    string `yaml:"version,omitempty"`
 	JdkVersion string `yaml:"jdk_version,omitempty"`
 }
 
 // DockerConfig contient les paramètres Docker
 type DockerConfig struct {
-	Port      string `yaml:"port"`
+	Port      string            `yaml:"port"`
 	BuildArgs map[string]string `yaml:"build_args,omitempty"`
 }
 
 // DevelopmentConfig contient les paramètres de développement
 type DevelopmentConfig struct {
-	EnableLiveReload bool   `yaml:"enable_live_reload"`
-	SyncPath         string `yaml:"sync_path,omitempty"`
+	EnableLiveReload bool     `yaml:"enable_live_reload"`
+	SyncPath         string   `yaml:"sync_path,omitempty"`
 	WatchPaths       []string `yaml:"watch_paths,omitempty"`
 }
 
@@ -73,19 +74,19 @@ func DefaultConfig(frameworkType string) Config {
 			SyncPath:         "./src",
 		},
 	}
-	
+
 	return config
 }
 
 // LoadConfig charge la configuration à partir d'un fichier
 func LoadConfig(path string) (Config, error) {
 	var config Config
-	
+
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return config, err
 	}
-	
+
 	err = yaml.Unmarshal(data, &config)
 	return config, err
 }
@@ -96,7 +97,7 @@ func SaveConfig(config Config, path string) error {
 	if err != nil {
 		return err
 	}
-	
+
 	return os.WriteFile(path, data, 0644)
 }
 

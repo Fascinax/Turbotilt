@@ -2,8 +2,20 @@ package render
 
 import (
 	"os"
+	"path/filepath"
 	"text/template"
+	"time"
 )
+
+// TiltfileTemplateData contient les données pour le template du Tiltfile
+type TiltfileTemplateData struct {
+	Framework  string
+	AppName    string
+	Port       string
+	Date       string
+	DevMode    bool
+	Services   []interface{}
+}
 
 // GenerateTiltfile génère un Tiltfile personnalisé pour le projet
 func GenerateTiltfile(opts Options) error {
@@ -13,50 +25,60 @@ func GenerateTiltfile(opts Options) error {
 	}
 	defer f.Close()
 
-	// Chemin de sync par défaut
-	syncPath := "./src"
-	
-	// Ajuster le chemin de sync selon le framework
-	switch opts.Framework {
-	case "spring", "quarkus", "micronaut":
-		syncPath = "./src/main/java"
+	// Définir des délimiteurs personnalisés pour éviter les conflits avec la syntaxe Tilt
+	funcMap := template.FuncMap{
+		"eq": func(a, b interface{}) bool {
+			return a == b
+		},
 	}
 
-	// Contenu du Tiltfile selon le framework
-	tiltContent := `# Turbotilt - Tiltfile généré automatiquement
-# Framework: {{ .Framework }}
-
-docker_build('app', '.', 
-  dockerfile='Dockerfile',
-  live_update=[
-    sync('{{ .SyncPath }}', '/app/{{ .SyncPath }}'),
-{{if eq .Framework "spring"}}    # Rechargement à chaud pour Spring
-    run('touch /app/src/main/resources/application.properties', trigger=['{{ .SyncPath }}/**/*.java']),
-{{else if eq .Framework "quarkus"}}    # Rechargement à chaud pour Quarkus
-    run('touch /app/src/main/resources/application.properties', trigger=['{{ .SyncPath }}/**/*.java']),
-{{else if eq .Framework "micronaut"}}    # Rechargement à chaud pour Micronaut
-    run('touch /app/src/main/resources/application.yml', trigger=['{{ .SyncPath }}/**/*.java']),
-{{else}}    # Rechargement simple
-{{end}}
-    run('echo "Files synced to container at $(date)"', trigger=['{{ .SyncPath }}'])
-  ]
-)
-
-# Configuration spécifique
-{{if eq .Framework "spring"}}
-# Spring Boot configuration
-# Hot reload using Spring DevTools
-{{else if eq .Framework "quarkus"}}
-# Quarkus configuration
-# Hot reload using Quarkus Dev Services
-{{else if eq .Framework "micronaut"}}
-# Micronaut configuration
-# Hot reload using Micronaut DevTools
-{{end}}
-
-# Mode: {{if .DevMode}}Development{{else}}Production{{end}}
-
-# Port: {{ .Port }}
+	// Préparer les données pour le template
+	appName := "app"
+	if opts.AppName == "" {
+		// Utiliser le nom du répertoire courant comme nom par défaut
+		cwd, err := os.Getwd()
+		if err == nil {
+			appName = filepath.Base(cwd)
+		}
+	} else {
+		appName = opts.AppName
+	}
+	
+	port := "8080" // Port par défaut
+	if opts.Port != "" {
+		port = opts.Port
+	}
+	
+	// Préparer les données à injecter dans le template
+	// Convertir les services en []interface{} pour le template
+	services := make([]interface{}, len(opts.Services))
+	for i, svc := range opts.Services {
+		services[i] = svc
+	}
+	
+	data := TiltfileTemplateData{
+		Framework:  opts.Framework,
+		AppName:    appName,
+		Port:       port,
+		Date:       time.Now().Format("2006-01-02 15:04:05"),
+		DevMode:    opts.DevMode,
+		Services:   services,
+	}
+	
+	// Charger le template depuis le fichier
+	tmplPath := "templates/Tiltfile.tmpl"
+	tmpl, err := template.New("Tiltfile").Delims("[[", "]]").Funcs(funcMap).ParseFiles(tmplPath)
+	if err != nil {
+		return err
+	}
+	
+	// Exécuter le template
+	err = tmpl.Execute(f, data)
+	if err != nil {
+		return err
+	}
+	
+	return nil
 
 k8s_yaml('docker-compose.yml')
 `

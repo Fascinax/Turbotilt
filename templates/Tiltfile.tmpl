@@ -1,5 +1,71 @@
-# Tiltfile template
+# Tiltfile généré par Turbotilt
+# Framework: [[.Framework]]
+# Date: [[.Date]]
 
-docker_build('app', '.', dockerfile='Dockerfile')
-live_update = [ sync('./src', '/app/src') ]
+# Configuration de base
+APP_NAME = '[[.AppName]]'
+PORT = [[.Port]]
+
+# Construction de l'image Docker
+docker_build(
+  APP_NAME, 
+  '.',
+  dockerfile='Dockerfile',
+  live_update=[
+    # Synchronisation du code source
+[[if eq .Framework "spring"]]
+    # Configuration pour Spring Boot
+    sync('./src/main/java', '/app/src/main/java'),
+    sync('./src/main/resources', '/app/src/main/resources'),
+    # Redémarrage en cas de modifications de configuration
+    restart_container_if_updated('./src/main/resources/application.yml'),
+    restart_container_if_updated('./src/main/resources/application.properties')
+[[else if eq .Framework "quarkus"]]
+    # Configuration pour Quarkus
+    sync('./src/main/java', '/app/src/main/java'),
+    sync('./src/main/resources', '/app/src/main/resources'),
+    # Quarkus supporte le live reload
+    run('mvn compile quarkus:dev', trigger=['./src/main/resources/application.properties'])
+[[else if eq .Framework "micronaut"]]
+    # Configuration pour Micronaut
+    sync('./src/main/java', '/app/src/main/java'),
+    sync('./src/main/resources', '/app/src/main/resources'),
+    # Redémarrage pour Micronaut
+    restart_container_if_updated('./src/main/resources/application.yml')
+[[else]]
+    # Configuration générique
+    sync('./src', '/app/src')
+[[end]]
+  ]
+)
+
+# Configuration des ressources Kubernetes à partir du docker-compose.yml
 k8s_yaml('docker-compose.yml')
+
+# Configuration du port forwarding
+k8s_resource(
+  APP_NAME,
+  port_forwards=[
+    '[[.Port]]:[[.Port]]'
+  ],
+  labels=['app']
+)
+
+# Configuration de surveillance des logs
+watch_file('./src')
+
+[[if .DevMode]]
+# Mode développement activé
+# Affichage des logs plus détaillés
+update_settings(max_parallel_updates=1)
+[[end]]
+
+[[if .Services]]
+# Services dépendants détectés
+[[range .Services]]
+# Service: [[.Type]] ([[.Version]])
+k8s_resource('[[.Type]]', labels=['db'])
+[[end]]
+[[end]]
+
+print('🚀 Tiltfile chargé pour [[.Framework]] (port: [[.Port]])')

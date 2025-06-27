@@ -2,8 +2,9 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/spf13/cobra"
 	"os/exec"
+
+	"github.com/spf13/cobra"
 )
 
 var stopCmd = &cobra.Command{
@@ -11,10 +12,10 @@ var stopCmd = &cobra.Command{
 	Short: "Arrête l'environnement de développement",
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("🛑 Arrêt de l'environnement de développement...")
-		
+
 		// Vérifier si Tilt est en cours d'exécution
 		tiltRunning := exec.Command("powershell.exe", "-Command", "Get-Process | Where-Object { $_.ProcessName -eq 'tilt' }").Run() == nil
-		
+
 		if tiltRunning {
 			fmt.Println("⏳ Arrêt de Tilt...")
 			stopTilt := exec.Command("tilt", "down")
@@ -32,20 +33,20 @@ var stopCmd = &cobra.Command{
 				fmt.Println("✅ Docker Compose arrêté.")
 			}
 		}
-		
+
 		// Proposer de nettoyer les fichiers temporaires
 		if cleanupFlag {
 			fmt.Println("⏳ Nettoyage des fichiers temporaires...")
 			filesToClean := []string{"Dockerfile", "docker-compose.yml", "Tiltfile"}
-			
+
 			for _, file := range filesToClean {
 				cleanFile := exec.Command("powershell.exe", "-Command", fmt.Sprintf("Remove-Item -Path '%s' -ErrorAction SilentlyContinue", file))
 				cleanFile.Run()
 			}
-			
+
 			fmt.Println("✅ Fichiers temporaires nettoyés.")
 		}
-		
+
 		fmt.Println("✨ Environnement arrêté.")
 	},
 }

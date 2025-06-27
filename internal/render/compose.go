@@ -18,13 +18,15 @@ type ComposeServiceDefinition struct {
 }
 
 // GenerateComposeWithServices génère un docker-compose.yml incluant les services détectés
-func GenerateComposeWithServices(opts Options, services []scan.ServiceConfig) error {
+func GenerateComposeWithServices(opts Options) error {
+	// Utiliser les services de l'objet opts
+	services := opts.Services
 	f, err := os.Create("docker-compose.yml")
 	if err != nil {
 		return fmt.Errorf("erreur lors de la création du docker-compose.yml: %w", err)
 	}
 	defer f.Close()
-	
+
 	// Service principal de l'application
 	appService := ComposeServiceDefinition{
 		Name:  "app",
@@ -35,7 +37,7 @@ func GenerateComposeWithServices(opts Options, services []scan.ServiceConfig) er
 		},
 		Environment: make(map[string]string),
 	}
-	
+
 	// Configurer l'environnement selon le framework
 	switch opts.Framework {
 	case "spring":
@@ -57,15 +59,15 @@ func GenerateComposeWithServices(opts Options, services []scan.ServiceConfig) er
 			appService.Environment["MICRONAUT_ENVIRONMENTS"] = "prod"
 		}
 	}
-	
+
 	// Liste des services à inclure dans docker-compose.yml
 	serviceDefinitions := []ComposeServiceDefinition{appService}
 	volumes := make(map[string]bool)
-	
+
 	// Ajouter les services détectés
 	for _, service := range services {
 		var serviceDefinition ComposeServiceDefinition
-		
+
 		switch service.Type {
 		case scan.MySQL:
 			serviceDefinition = ComposeServiceDefinition{
@@ -79,7 +81,7 @@ func GenerateComposeWithServices(opts Options, services []scan.ServiceConfig) er
 				},
 			}
 			volumes["mysql_data"] = true
-			
+
 		case scan.PostgreSQL:
 			serviceDefinition = ComposeServiceDefinition{
 				Name:    "postgres",
@@ -93,7 +95,7 @@ func GenerateComposeWithServices(opts Options, services []scan.ServiceConfig) er
 				},
 			}
 			volumes["postgres_data"] = true
-			
+
 		case scan.MongoDB:
 			serviceDefinition = ComposeServiceDefinition{
 				Name:    "mongodb",
@@ -102,7 +104,7 @@ func GenerateComposeWithServices(opts Options, services []scan.ServiceConfig) er
 				Volumes: []string{"mongo_data:/data/db"},
 			}
 			volumes["mongo_data"] = true
-			
+
 		case scan.Redis:
 			serviceDefinition = ComposeServiceDefinition{
 				Name:    "redis",
@@ -111,32 +113,32 @@ func GenerateComposeWithServices(opts Options, services []scan.ServiceConfig) er
 				Volumes: []string{"redis_data:/data"},
 			}
 			volumes["redis_data"] = true
-			
+
 		case scan.Kafka:
 			serviceDefinition = ComposeServiceDefinition{
-				Name:    "kafka",
-				Image:   "image: confluentinc/cp-kafka:latest",
-				Port:    "9092:9092",
+				Name:  "kafka",
+				Image: "image: confluentinc/cp-kafka:latest",
+				Port:  "9092:9092",
 				Environment: map[string]string{
-					"KAFKA_ADVERTISED_LISTENERS":               "PLAINTEXT://kafka:9092",
-					"KAFKA_LISTENER_SECURITY_PROTOCOL_MAP":     "PLAINTEXT:PLAINTEXT",
-					"KAFKA_INTER_BROKER_LISTENER_NAME":         "PLAINTEXT",
-					"KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR":  "1",
+					"KAFKA_ADVERTISED_LISTENERS":             "PLAINTEXT://kafka:9092",
+					"KAFKA_LISTENER_SECURITY_PROTOCOL_MAP":   "PLAINTEXT:PLAINTEXT",
+					"KAFKA_INTER_BROKER_LISTENER_NAME":       "PLAINTEXT",
+					"KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR": "1",
 				},
 				DependsOn: []string{"zookeeper"},
 			}
-			
+
 			// Ajouter aussi Zookeeper
 			zookeeper := ComposeServiceDefinition{
-				Name:    "zookeeper",
-				Image:   "image: confluentinc/cp-zookeeper:latest",
-				Port:    "2181:2181",
+				Name:  "zookeeper",
+				Image: "image: confluentinc/cp-zookeeper:latest",
+				Port:  "2181:2181",
 				Environment: map[string]string{
 					"ZOOKEEPER_CLIENT_PORT": "2181",
 				},
 			}
 			serviceDefinitions = append(serviceDefinitions, zookeeper)
-			
+
 		case scan.RabbitMQ:
 			serviceDefinition = ComposeServiceDefinition{
 				Name:    "rabbitmq",
@@ -149,7 +151,7 @@ func GenerateComposeWithServices(opts Options, services []scan.ServiceConfig) er
 				},
 			}
 			volumes["rabbitmq_data"] = true
-			
+
 		case scan.ElasticSearch:
 			serviceDefinition = ComposeServiceDefinition{
 				Name:    "elasticsearch",
@@ -157,60 +159,60 @@ func GenerateComposeWithServices(opts Options, services []scan.ServiceConfig) er
 				Port:    "9200:9200",
 				Volumes: []string{"es_data:/usr/share/elasticsearch/data"},
 				Environment: map[string]string{
-					"discovery.type":         "single-node",
-					"ES_JAVA_OPTS":           "-Xms512m -Xmx512m",
+					"discovery.type": "single-node",
+					"ES_JAVA_OPTS":   "-Xms512m -Xmx512m",
 				},
 			}
 			volumes["es_data"] = true
 		}
-		
+
 		if serviceDefinition.Name != "" {
 			appService.DependsOn = append(appService.DependsOn, serviceDefinition.Name)
 			serviceDefinitions = append(serviceDefinitions, serviceDefinition)
 		}
 	}
-	
+
 	// Mise à jour de la définition de l'application pour ajouter les dépendances
 	serviceDefinitions[0] = appService
-	
+
 	// Construire le contenu du fichier docker-compose.yml
 	var sb strings.Builder
 	sb.WriteString("version: '3'\n\nservices:\n")
-	
+
 	// Ajouter tous les services
 	for _, service := range serviceDefinitions {
 		sb.WriteString(fmt.Sprintf("  %s:\n", service.Name))
 		sb.WriteString(fmt.Sprintf("    %s\n", service.Image))
-		
+
 		if service.Port != "" {
 			sb.WriteString("    ports:\n")
 			sb.WriteString(fmt.Sprintf("      - '%s'\n", service.Port))
 		}
-		
+
 		if len(service.Environment) > 0 {
 			sb.WriteString("    environment:\n")
 			for k, v := range service.Environment {
 				sb.WriteString(fmt.Sprintf("      - %s=%s\n", k, v))
 			}
 		}
-		
+
 		if len(service.Volumes) > 0 {
 			sb.WriteString("    volumes:\n")
 			for _, volume := range service.Volumes {
 				sb.WriteString(fmt.Sprintf("      - %s\n", volume))
 			}
 		}
-		
+
 		if len(service.DependsOn) > 0 {
 			sb.WriteString("    depends_on:\n")
 			for _, dep := range service.DependsOn {
 				sb.WriteString(fmt.Sprintf("      - %s\n", dep))
 			}
 		}
-		
+
 		sb.WriteString("\n")
 	}
-	
+
 	// Ajouter les volumes si nécessaire
 	if len(volumes) > 0 {
 		sb.WriteString("volumes:\n")
@@ -218,7 +220,7 @@ func GenerateComposeWithServices(opts Options, services []scan.ServiceConfig) er
 			sb.WriteString(fmt.Sprintf("  %s:\n", volume))
 		}
 	}
-	
+
 	// Écrire le contenu dans le fichier
 	_, err = f.WriteString(sb.String())
 	return err

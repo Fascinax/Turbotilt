@@ -21,8 +21,8 @@ const (
 var (
 	currentLevel LogLevel = INFO
 	logFile      *os.File
-	useColors    bool     = true
-	useEmojis    bool     = true
+	useColors    bool = true
+	useEmojis    bool = true
 )
 
 // SetLevel définit le niveau minimum de log
@@ -96,10 +96,10 @@ func Fatal(format string, args ...interface{}) {
 func log(level LogLevel, format string, args ...interface{}) {
 	// Timestamp
 	timestamp := time.Now().Format("2006-01-02 15:04:05")
-	
+
 	// Préfixes selon le niveau
 	var levelStr, colorPrefix, colorSuffix, emoji string
-	
+
 	switch level {
 	case DEBUG:
 		levelStr = "DEBUG"
@@ -122,30 +122,30 @@ func log(level LogLevel, format string, args ...interface{}) {
 		colorPrefix = "\033[35m" // Magenta
 		emoji = "💥"
 	}
-	
+
 	colorSuffix = "\033[0m"
 	if !useColors {
 		colorPrefix = ""
 		colorSuffix = ""
 	}
-	
+
 	if !useEmojis {
 		emoji = ""
 	}
-	
+
 	// Formater le message
 	message := fmt.Sprintf(format, args...)
-	logLine := fmt.Sprintf("%s %s[%s]%s %s%s", 
-		timestamp, 
-		colorPrefix, 
-		levelStr, 
+	logLine := fmt.Sprintf("%s %s[%s]%s %s%s",
+		timestamp,
+		colorPrefix,
+		levelStr,
 		colorSuffix,
 		emoji,
 		message)
-	
+
 	// Afficher sur la console
 	fmt.Println(logLine)
-	
+
 	// Enregistrer dans le fichier si configuré
 	if logFile != nil {
 		// Sans couleurs dans le fichier

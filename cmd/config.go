@@ -2,11 +2,12 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/spf13/cobra"
 	"os"
 	"turbotilt/internal/config"
 	"turbotilt/internal/logger"
 	"turbotilt/internal/scan"
+
+	"github.com/spf13/cobra"
 )
 
 var (
@@ -26,11 +27,11 @@ var initConfigCmd = &cobra.Command{
 	Short: "Initialiser le fichier de configuration",
 	Run: func(cmd *cobra.Command, args []string) {
 		logger.Info("Initialisation du fichier de configuration...")
-		
+
 		// Déterminer le framework
 		framework := forceFramework
 		var err error
-		
+
 		if framework == "" {
 			framework, err = scan.DetectFramework()
 			if err != nil {
@@ -38,30 +39,30 @@ var initConfigCmd = &cobra.Command{
 				framework = "unknown"
 			}
 		}
-		
+
 		// Créer une configuration par défaut
 		cfg := config.DefaultConfig(framework)
-		
+
 		// Mettre à jour avec les paramètres de la ligne de commande
 		if projectName != "" {
 			cfg.Project.Name = projectName
 		}
-		
+
 		if projectDesc != "" {
 			cfg.Project.Description = projectDesc
 		}
-		
+
 		cfg.Docker.Port = port
 		cfg.Framework.JdkVersion = jdkVersion
 		cfg.Development.EnableLiveReload = devMode
-		
+
 		// Enregistrer la configuration
 		if err := config.SaveConfig(cfg, configPath); err != nil {
 			logger.Error("Erreur lors de l'enregistrement de la configuration: %v", err)
 			fmt.Printf("❌ Erreur: %v\n", err)
 			return
 		}
-		
+
 		logger.Info("Configuration enregistrée dans %s", configPath)
 		fmt.Printf("✅ Configuration enregistrée dans %s\n", configPath)
 		fmt.Println("📋 Contenu:")
@@ -69,7 +70,7 @@ var initConfigCmd = &cobra.Command{
 		fmt.Printf("   - Framework: %s (JDK %s)\n", cfg.Framework.Type, cfg.Framework.JdkVersion)
 		fmt.Printf("   - Port: %s\n", cfg.Docker.Port)
 		fmt.Printf("   - Live reload: %v\n", cfg.Development.EnableLiveReload)
-		
+
 		// Proposer la prochaine étape
 		fmt.Println("\n▶️ Pour générer les fichiers: turbotilt init")
 	},
@@ -80,7 +81,7 @@ var showConfigCmd = &cobra.Command{
 	Short: "Afficher la configuration actuelle",
 	Run: func(cmd *cobra.Command, args []string) {
 		logger.Info("Affichage de la configuration depuis %s", configPath)
-		
+
 		// Vérifier si le fichier existe
 		if _, err := os.Stat(configPath); os.IsNotExist(err) {
 			logger.Error("Le fichier de configuration n'existe pas: %s", configPath)
@@ -88,7 +89,7 @@ var showConfigCmd = &cobra.Command{
 			fmt.Println("▶️ Pour créer une configuration: turbotilt config init")
 			return
 		}
-		
+
 		// Charger la configuration
 		cfg, err := config.LoadConfig(configPath)
 		if err != nil {
@@ -96,7 +97,7 @@ var showConfigCmd = &cobra.Command{
 			fmt.Printf("❌ Erreur: %v\n", err)
 			return
 		}
-		
+
 		fmt.Println("📋 Configuration du projet:")
 		fmt.Printf("   - Nom: %s\n", cfg.Project.Name)
 		fmt.Printf("   - Description: %s\n", cfg.Project.Description)
@@ -109,7 +110,7 @@ var showConfigCmd = &cobra.Command{
 		fmt.Println("🛠️ Développement:")
 		fmt.Printf("   - Live reload: %v\n", cfg.Development.EnableLiveReload)
 		fmt.Printf("   - Chemin de synchronisation: %s\n", cfg.Development.SyncPath)
-		
+
 		// Afficher les services
 		if len(cfg.Services) > 0 {
 			fmt.Println("🔌 Services:")
@@ -124,7 +125,7 @@ func init() {
 	rootCmd.AddCommand(configCmd)
 	configCmd.AddCommand(initConfigCmd)
 	configCmd.AddCommand(showConfigCmd)
-	
+
 	// Options pour config init
 	initConfigCmd.Flags().StringVarP(&configPath, "output", "o", "turbotilt.yml", "Chemin du fichier de configuration")
 	initConfigCmd.Flags().StringVarP(&projectName, "name", "n", "", "Nom du projet")
@@ -133,7 +134,7 @@ func init() {
 	initConfigCmd.Flags().StringVarP(&port, "port", "p", "8080", "Port à exposer")
 	initConfigCmd.Flags().StringVarP(&jdkVersion, "jdk", "j", "17", "Version du JDK")
 	initConfigCmd.Flags().BoolVarP(&devMode, "dev", "d", true, "Mode développement")
-	
+
 	// Options pour config show
 	showConfigCmd.Flags().StringVarP(&configPath, "file", "f", "turbotilt.yml", "Chemin du fichier de configuration")
 }

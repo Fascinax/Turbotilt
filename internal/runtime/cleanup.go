@@ -10,7 +10,7 @@ import (
 func SetupCleanup(tempFiles []string) {
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
-	
+
 	go func() {
 		<-c
 		CleanupTempFiles(tempFiles)

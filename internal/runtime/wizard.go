@@ -2,12 +2,13 @@ package runtime
 
 import (
 	"fmt"
+	"os"
+	"turbotilt/internal/config"
+
 	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"os"
-	"turbotilt/internal/config"
 )
 
 var (
@@ -66,11 +67,11 @@ func InitModel() tea.Model {
 	ti.Width = 50
 
 	m := InteractiveConfig{
-		list:      l,
-		textInput: ti,
-		config: config.DefaultConfig("unknown"),
-		steps:      []string{"select", "project", "docker", "dev", "services", "generate", "start"},
-		currentStep: 0,
+		list:         l,
+		textInput:    ti,
+		config:       config.DefaultConfig("unknown"),
+		steps:        []string{"select", "project", "docker", "dev", "services", "generate", "start"},
+		currentStep:  0,
 		stepComplete: make([]bool, 7),
 	}
 

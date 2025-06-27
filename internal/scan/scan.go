@@ -9,7 +9,7 @@ import (
 )
 
 type Project struct {
-	XMLName     xml.Name `xml:"project"`
+	XMLName      xml.Name `xml:"project"`
 	Dependencies struct {
 		Dependencies []struct {
 			GroupId    string `xml:"groupId"`

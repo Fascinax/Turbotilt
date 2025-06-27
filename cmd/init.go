@@ -2,9 +2,12 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/spf13/cobra"
+	"os"
+	"path/filepath"
 	"turbotilt/internal/render"
 	"turbotilt/internal/scan"
+
+	"github.com/spf13/cobra"
 )
 
 var (
@@ -25,7 +28,7 @@ var initCmd = &cobra.Command{
 		// Détecter le framework ou utiliser celui spécifié
 		framework := forceFramework
 		var err error
-		
+
 		if framework == "" {
 			framework, err = scan.DetectFramework()
 			if err != nil {
@@ -44,7 +47,7 @@ var initCmd = &cobra.Command{
 			if err != nil {
 				fmt.Printf("⚠️ Avertissement lors de la détection des services: %v\n", err)
 			}
-			
+
 			// Afficher les services détectés
 			if len(services) > 0 {
 				fmt.Println("✅ Services détectés:")
@@ -56,13 +59,21 @@ var initCmd = &cobra.Command{
 			}
 		}
 
+		// Déterminer le nom de l'application (dossier courant par défaut)
+		appName := "app"
+		cwd, err := os.Getwd()
+		if err == nil {
+			appName = filepath.Base(cwd)
+		}
+
 		// Préparer les options de rendu
 		renderOpts := render.Options{
-			Framework:   framework,
-			Port:        port,
-			JDKVersion:  jdkVersion,
-			DevMode:     devMode,
-			Services:    services,
+			Framework:  framework,
+			AppName:    appName,
+			Port:       port,
+			JDKVersion: jdkVersion,
+			DevMode:    devMode,
+			Services:   services,
 		}
 
 		// Générer les fichiers
@@ -73,7 +84,7 @@ var initCmd = &cobra.Command{
 
 		// Utiliser le nouveau générateur de docker-compose avec support des services
 		if len(services) > 0 {
-			if err := render.GenerateComposeWithServices(renderOpts, services); err != nil {
+			if err := render.GenerateComposeWithServices(renderOpts); err != nil {
 				fmt.Printf("❌ Erreur lors de la génération du docker-compose.yml: %v\n", err)
 				return
 			}
@@ -100,7 +111,7 @@ var initCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(initCmd)
-	
+
 	// Flags pour la commande init
 	initCmd.Flags().StringVarP(&forceFramework, "framework", "f", "", "Spécifier manuellement le framework (spring, quarkus, java)")
 	initCmd.Flags().StringVarP(&port, "port", "p", "8080", "Port à exposer pour l'application")
