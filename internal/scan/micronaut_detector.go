@@ -30,8 +30,8 @@ func (d *MicronautDetector) Detect(projectPath string) (bool, DetectionResult, e
 
 		// Parseur simplifié pour pom.xml
 		var pom struct {
-			XMLName    xml.Name `xml:"project"`
-			Parent     struct {
+			XMLName xml.Name `xml:"project"`
+			Parent  struct {
 				GroupID    string `xml:"groupId"`
 				ArtifactID string `xml:"artifactId"`
 			} `xml:"parent"`
@@ -49,13 +49,13 @@ func (d *MicronautDetector) Detect(projectPath string) (bool, DetectionResult, e
 
 		// Vérifier si c'est un projet Micronaut
 		isMicronaut := false
-		
+
 		// Vérifier le parent
-		if strings.Contains(pom.Parent.GroupID, "micronaut") || 
-		   strings.Contains(pom.Parent.ArtifactID, "micronaut") {
+		if strings.Contains(pom.Parent.GroupID, "micronaut") ||
+			strings.Contains(pom.Parent.ArtifactID, "micronaut") {
 			isMicronaut = true
 		}
-		
+
 		// Vérifier les dépendances
 		for _, dep := range pom.Dependencies.Dependency {
 			if strings.Contains(dep.GroupID, "micronaut") {
@@ -80,10 +80,10 @@ func (d *MicronautDetector) Detect(projectPath string) (bool, DetectionResult, e
 		}
 
 		content := string(data)
-		
+
 		// Vérifier les références à Micronaut dans le fichier build.gradle
-		if strings.Contains(content, "micronaut") || 
-		   strings.Contains(content, "io.micronaut") {
+		if strings.Contains(content, "micronaut") ||
+			strings.Contains(content, "io.micronaut") {
 			result.BuildSystem = "gradle"
 			return true, result, nil
 		}
@@ -99,7 +99,7 @@ func (d *MicronautDetector) Detect(projectPath string) (bool, DetectionResult, e
 		}
 
 		content := string(data)
-		
+
 		// Vérifier les références à Micronaut dans le fichier application.yml
 		if strings.Contains(content, "micronaut:") {
 			// Déterminer le système de build si possible
@@ -126,14 +126,14 @@ func (d *MicronautDetector) Detect(projectPath string) (bool, DetectionResult, e
 			if err != nil {
 				return err
 			}
-			
+
 			if !info.IsDir() && strings.HasSuffix(info.Name(), ".java") {
 				// Vérifier si le fichier contient des imports Micronaut
 				data, err := os.ReadFile(path)
 				if err != nil {
 					return nil // Continuer malgré l'erreur
 				}
-				
+
 				content := string(data)
 				if strings.Contains(content, "import io.micronaut.") {
 					// Déterminer le système de build si possible
@@ -145,7 +145,7 @@ func (d *MicronautDetector) Detect(projectPath string) (bool, DetectionResult, e
 					result.Detected = true
 					return filepath.SkipAll // Sortir de la fonction Walk
 				}
-				
+
 				// Vérifier les noms de fichiers typiques
 				for _, className := range micronautClasses {
 					if strings.HasSuffix(info.Name(), className) {
@@ -153,7 +153,7 @@ func (d *MicronautDetector) Detect(projectPath string) (bool, DetectionResult, e
 						if err != nil {
 							continue
 						}
-						
+
 						content := string(data)
 						if strings.Contains(content, "import io.micronaut.") {
 							// Déterminer le système de build si possible
@@ -170,11 +170,11 @@ func (d *MicronautDetector) Detect(projectPath string) (bool, DetectionResult, e
 			}
 			return nil
 		})
-		
+
 		if err != nil {
 			return false, result, err
 		}
-		
+
 		if result.Detected {
 			return true, result, nil
 		}

@@ -42,13 +42,13 @@ func NewScanner(projectPath string) *Scanner {
 func (s *Scanner) DetectFramework() (string, *DetectionResult, error) {
 	// Create instances of detectors
 	micronautDetector := &MicronautDetector{}
-	
+
 	// First check for Micronaut framework
 	detected, result, err := micronautDetector.Detect(s.ProjectPath)
 	if err == nil && detected {
 		return result.Framework, &result, nil
 	}
-	
+
 	// If Micronaut not detected, fall back to simpler detection methods
 	// Check for pom.xml (Maven)
 	pomPath := filepath.Join(s.ProjectPath, "pom.xml")
@@ -76,7 +76,7 @@ func (s *Scanner) DetectFramework() (string, *DetectionResult, error) {
 			}
 		}
 	}
-	
+
 	// Check for build.gradle (Gradle)
 	gradlePath := filepath.Join(s.ProjectPath, "build.gradle")
 	if _, err := os.Stat(gradlePath); err == nil {
@@ -103,7 +103,7 @@ func (s *Scanner) DetectFramework() (string, *DetectionResult, error) {
 			}
 		}
 	}
-	
+
 	// No framework detected
 	return "", nil, fmt.Errorf("no framework detected")
 }

@@ -15,21 +15,21 @@ const (
 
 // Translator gère les traductions
 type Translator struct {
-	currentLang string
+	currentLang  string
 	translations map[string]map[string]string
 }
 
 // NewTranslator crée un nouveau traducteur
 func NewTranslator() *Translator {
 	t := &Translator{
-		currentLang: DefaultLang,
+		currentLang:  DefaultLang,
 		translations: make(map[string]map[string]string),
 	}
-	
+
 	// Charger les traductions intégrées
 	t.translations["fr"] = frTranslations
 	t.translations["en"] = enTranslations
-	
+
 	// Essayer de détecter la langue du système
 	lang := os.Getenv("LANG")
 	if lang != "" {
@@ -38,7 +38,7 @@ func NewTranslator() *Translator {
 			t.currentLang = lang
 		}
 	}
-	
+
 	return t
 }
 
@@ -48,25 +48,25 @@ func (t *Translator) LoadTranslations(dir string) error {
 	if err != nil {
 		return err
 	}
-	
+
 	for _, file := range files {
 		if !file.IsDir() && strings.HasSuffix(file.Name(), ".json") {
 			lang := strings.TrimSuffix(file.Name(), ".json")
-			
+
 			data, err := os.ReadFile(filepath.Join(dir, file.Name()))
 			if err != nil {
 				continue
 			}
-			
+
 			var translations map[string]string
 			if err := json.Unmarshal(data, &translations); err != nil {
 				continue
 			}
-			
+
 			t.translations[lang] = translations
 		}
 	}
-	
+
 	return nil
 }
 
@@ -95,7 +95,7 @@ func (t *Translator) T(key string, args ...interface{}) string {
 			return str
 		}
 	}
-	
+
 	// Essayer la langue par défaut si différente
 	if t.currentLang != DefaultLang {
 		if trans, ok := t.translations[DefaultLang]; ok {
@@ -107,7 +107,7 @@ func (t *Translator) T(key string, args ...interface{}) string {
 			}
 		}
 	}
-	
+
 	// Fallback à la clé
 	return key
 }

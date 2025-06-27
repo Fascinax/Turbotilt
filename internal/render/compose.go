@@ -321,7 +321,7 @@ func GenerateMultiServiceCompose(serviceList ServiceList) error {
 
 	// Ajouter les services dépendants (MySQL, Redis, etc.) détectés
 	volumes := make(map[string]bool)
-	
+
 	// Parcourir chaque service pour ses dépendances
 	for _, opts := range serviceList.Services {
 		// Traiter les services dépendants de ce service
@@ -379,26 +379,26 @@ func GenerateMultiServiceCompose(serviceList ServiceList) error {
 				// Ajouter le service au docker-compose
 				sb.WriteString(fmt.Sprintf("  %s:\n", serviceDefinition.Name))
 				sb.WriteString(fmt.Sprintf("    %s\n", serviceDefinition.Image))
-				
+
 				if serviceDefinition.Port != "" {
 					sb.WriteString("    ports:\n")
 					sb.WriteString(fmt.Sprintf("      - '%s'\n", serviceDefinition.Port))
 				}
-				
+
 				if len(serviceDefinition.Environment) > 0 {
 					sb.WriteString("    environment:\n")
 					for k, v := range serviceDefinition.Environment {
 						sb.WriteString(fmt.Sprintf("      - %s=%s\n", k, v))
 					}
 				}
-				
+
 				if len(serviceDefinition.Volumes) > 0 {
 					sb.WriteString("    volumes:\n")
 					for _, volume := range serviceDefinition.Volumes {
 						sb.WriteString(fmt.Sprintf("      - %s\n", volume))
 					}
 				}
-				
+
 				sb.WriteString("\n")
 			}
 		}

@@ -150,6 +150,8 @@ func log(level LogLevel, format string, args ...interface{}) {
 	if logFile != nil {
 		// Sans couleurs dans le fichier
 		fileLogLine := fmt.Sprintf("%s [%s] %s\n", timestamp, levelStr, message)
-		logFile.WriteString(fileLogLine)
+		if _, err := logFile.WriteString(fileLogLine); err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to write to log file: %v\n", err)
+		}
 	}
 }

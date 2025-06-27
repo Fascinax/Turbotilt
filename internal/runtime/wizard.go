@@ -12,12 +12,13 @@ import (
 )
 
 var (
-	titleStyle        = lipgloss.NewStyle().MarginLeft(2)
-	itemStyle         = lipgloss.NewStyle().PaddingLeft(4)
-	selectedItemStyle = lipgloss.NewStyle().PaddingLeft(2).Foreground(lipgloss.Color("170"))
-	paginationStyle   = list.DefaultStyles().PaginationStyle.PaddingLeft(4)
-	helpStyle         = list.DefaultStyles().HelpStyle.PaddingLeft(4).PaddingBottom(1)
-	quitTextStyle     = lipgloss.NewStyle().Margin(1, 0, 2, 4)
+	titleStyle = lipgloss.NewStyle().MarginLeft(2)
+	// Currently unused
+	// itemStyle         = lipgloss.NewStyle().PaddingLeft(4)
+	// selectedItemStyle = lipgloss.NewStyle().PaddingLeft(2).Foreground(lipgloss.Color("170"))
+	paginationStyle = list.DefaultStyles().PaginationStyle.PaddingLeft(4)
+	helpStyle       = list.DefaultStyles().HelpStyle.PaddingLeft(4).PaddingBottom(1)
+	quitTextStyle   = lipgloss.NewStyle().Margin(1, 0, 2, 4)
 )
 
 // item représente un élément de la liste interactive
@@ -190,7 +191,7 @@ func (m *InteractiveConfig) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func generateFiles(m *InteractiveConfig) tea.Cmd {
 	return func() tea.Msg {
 		p := tea.NewProgram(generateFilesModel{config: m.config})
-		err := p.Start()
+		_, err := p.Run()
 		return generateFilesFinishedMsg{err: err}
 	}
 }
@@ -199,7 +200,7 @@ func generateFiles(m *InteractiveConfig) tea.Cmd {
 func startEnvironment(m *InteractiveConfig) tea.Cmd {
 	return func() tea.Msg {
 		p := tea.NewProgram(startEnvironmentModel{})
-		err := p.Start()
+		_, err := p.Run()
 		return startEnvironmentFinishedMsg{err: err}
 	}
 }

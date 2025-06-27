@@ -34,7 +34,7 @@ func init() {
 	rootCmd.PersistentFlags().BoolVar(&dryRun, "dry-run", false, "Simulate execution without making changes")
 	rootCmd.PersistentFlags().BoolVar(&debugMode, "debug", false, "Enable debug mode with verbose output")
 	rootCmd.PersistentFlags().BoolVar(&noUpdate, "no-update", false, "Disable automatic update checks")
-	
+
 	// Custom version template
 	rootCmd.SetVersionTemplate(`Turbotilt {{.Version}}
 Build: {{if .GitCommit}}{{.GitCommit}} ({{.BuildTime}}){{else}}unknown{{end}}
@@ -63,7 +63,7 @@ Built: %s
 func checkForUpdates() {
 	release, hasUpdate := update.CheckForUpdates(Version)
 	if hasUpdate && release != nil {
-		fmt.Printf("\n📦 Une nouvelle version de Turbotilt est disponible: %s (actuelle: %s)\n", 
+		fmt.Printf("\n📦 Une nouvelle version de Turbotilt est disponible: %s (actuelle: %s)\n",
 			release.TagName, Version)
 		fmt.Printf("Téléchargez-la sur: %s\n\n", release.URL)
 	}

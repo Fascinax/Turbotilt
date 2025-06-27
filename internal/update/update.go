@@ -8,14 +8,16 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+
 	"strings"
 	"time"
+	"turbotilt/internal/logger"
 )
 
 // Constants and variables for testing
 var (
-	githubAPI          = "https://api.github.com/repos/Fascinax/turbotilt/releases/latest"
-	updateCheckTTL     = 24 * time.Hour
+	githubAPI              = "https://api.github.com/repos/Fascinax/turbotilt/releases/latest"
+	updateCheckTTL         = 24 * time.Hour
 	getUpdateTimestampPath = func() string {
 		var configDir string
 		switch runtime.GOOS {
@@ -26,7 +28,7 @@ var (
 		default: // Linux and others
 			configDir = filepath.Join(os.Getenv("HOME"), ".config", "turbotilt")
 		}
-		
+
 		return filepath.Join(configDir, "update_timestamp")
 	}
 )
@@ -90,7 +92,9 @@ func shouldCheckForUpdate() bool {
 // updateLastCheckTime updates the timestamp of the last update check
 func updateLastCheckTime() {
 	timestampFile := getUpdateTimestampPath()
-	os.MkdirAll(filepath.Dir(timestampFile), 0755)
+	if err := os.MkdirAll(filepath.Dir(timestampFile), 0755); err != nil {
+		logger.Debug("Failed to create directory for update timestamp: %v", err)
+	}
 	f, err := os.Create(timestampFile)
 	if err != nil {
 		return
@@ -133,7 +137,7 @@ func isNewer(currentVersion, latestVersion string) bool {
 	if strings.Contains(latestVersion, "-") && !strings.Contains(currentVersion, "-") {
 		return false
 	}
-	
+
 	return latestVersion > currentVersion
 }
 

@@ -27,7 +27,7 @@ func TestIsNewer(t *testing.T) {
 	for _, test := range tests {
 		result := isNewer(test.current, test.latest)
 		if result != test.result {
-			t.Errorf("isNewer(%s, %s) = %v, attendu %v", 
+			t.Errorf("isNewer(%s, %s) = %v, attendu %v",
 				test.current, test.latest, result, test.result)
 		}
 	}
@@ -38,16 +38,16 @@ func TestShouldCheckForUpdate(t *testing.T) {
 	tempDir := t.TempDir()
 	origGetUpdateTimestampPath := getUpdateTimestampPath
 	defer func() { getUpdateTimestampPath = origGetUpdateTimestampPath }()
-	
+
 	getUpdateTimestampPath = func() string {
 		return filepath.Join(tempDir, "update_timestamp")
 	}
-	
+
 	// Cas 1: Pas de fichier timestamp, devrait retourner true
 	if !shouldCheckForUpdate() {
 		t.Error("shouldCheckForUpdate devrait retourner true quand le fichier n'existe pas")
 	}
-	
+
 	// Créer un fichier timestamp
 	timestampFile := getUpdateTimestampPath()
 	if err := os.MkdirAll(filepath.Dir(timestampFile), 0755); err != nil {
@@ -58,19 +58,19 @@ func TestShouldCheckForUpdate(t *testing.T) {
 		t.Fatalf("Impossible de créer le fichier timestamp: %v", err)
 	}
 	f.Close()
-	
+
 	// Cas 2: Fichier timestamp récent, devrait retourner false
 	if shouldCheckForUpdate() {
 		t.Error("shouldCheckForUpdate devrait retourner false avec un fichier timestamp récent")
 	}
-	
+
 	// Cas 3: Fichier timestamp ancien, devrait retourner true
 	// Simuler un fichier ancien en modifiant sa date de modification
 	oldTime := time.Now().Add(-updateCheckTTL - time.Hour)
 	if err := os.Chtimes(timestampFile, oldTime, oldTime); err != nil {
 		t.Fatalf("Impossible de modifier la date du fichier: %v", err)
 	}
-	
+
 	if !shouldCheckForUpdate() {
 		t.Error("shouldCheckForUpdate devrait retourner true avec un fichier timestamp ancien")
 	}
@@ -81,20 +81,20 @@ func TestUpdateLastCheckTime(t *testing.T) {
 	tempDir := t.TempDir()
 	origGetUpdateTimestampPath := getUpdateTimestampPath
 	defer func() { getUpdateTimestampPath = origGetUpdateTimestampPath }()
-	
+
 	getUpdateTimestampPath = func() string {
 		return filepath.Join(tempDir, "update_timestamp")
 	}
-	
+
 	// Vérifier que le fichier n'existe pas au début
 	timestampFile := getUpdateTimestampPath()
 	if _, err := os.Stat(timestampFile); err == nil {
 		t.Error("Le fichier timestamp ne devrait pas exister au début du test")
 	}
-	
+
 	// Mettre à jour le timestamp
 	updateLastCheckTime()
-	
+
 	// Vérifier que le fichier existe maintenant
 	if _, err := os.Stat(timestampFile); err != nil {
 		t.Errorf("Le fichier timestamp devrait exister après updateLastCheckTime: %v", err)
@@ -128,38 +128,38 @@ func TestGetLatestRelease(t *testing.T) {
 		}`))
 	}))
 	defer server.Close()
-	
+
 	// Sauvegarder l'URL originale et la restaurer après le test
 	origGithubAPI := githubAPI
-	defer func() { 
-		githubAPI = origGithubAPI 
+	defer func() {
+		githubAPI = origGithubAPI
 	}()
-	
+
 	// Utiliser une variable locale avec la même valeur
 	testAPI := server.URL
 	// Utiliser cette variable dans la fonction de test
 	githubAPI = testAPI
-	
+
 	// Tester getLatestRelease
 	release, err := getLatestRelease()
 	if err != nil {
 		t.Fatalf("getLatestRelease a retourné une erreur: %v", err)
 	}
-	
+
 	if release.TagName != "v1.2.3" {
 		t.Errorf("release.TagName = %s, attendu v1.2.3", release.TagName)
 	}
-	
+
 	if release.URL != "https://github.com/test/repo/releases/v1.2.3" {
 		t.Errorf("release.URL = %s, attendu https://github.com/test/repo/releases/v1.2.3", release.URL)
 	}
-	
+
 	if len(release.Assets) != 1 {
 		t.Fatalf("len(release.Assets) = %d, attendu 1", len(release.Assets))
 	}
-	
+
 	if release.Assets[0].Name != "turbotilt-1.2.3-darwin-amd64.zip" {
-		t.Errorf("release.Assets[0].Name = %s, attendu turbotilt-1.2.3-darwin-amd64.zip", 
+		t.Errorf("release.Assets[0].Name = %s, attendu turbotilt-1.2.3-darwin-amd64.zip",
 			release.Assets[0].Name)
 	}
 }
@@ -188,7 +188,7 @@ func TestGetUpdateAssetURL(t *testing.T) {
 			},
 		},
 	}
-	
+
 	// Tester différentes combinaisons de plateforme/architecture
 	testCases := []struct {
 		platform, arch, expectedAsset string
@@ -199,7 +199,7 @@ func TestGetUpdateAssetURL(t *testing.T) {
 		{"windows", "amd64", "windows-amd64"},
 		{"freebsd", "amd64", ""}, // Plateforme non supportée
 	}
-	
+
 	for _, tc := range testCases {
 		// Simuler des architectures différentes en utilisant une closure
 		url := func() string {
@@ -212,17 +212,17 @@ func TestGetUpdateAssetURL(t *testing.T) {
 			}
 			return release.URL
 		}()
-		
+
 		if tc.expectedAsset == "" {
 			// Pour les plateformes non supportées, on s'attend à avoir l'URL de la release
 			if url != release.URL {
-				t.Errorf("GetUpdateAssetURL pour %s/%s = %s, attendu %s", 
+				t.Errorf("GetUpdateAssetURL pour %s/%s = %s, attendu %s",
 					tc.platform, tc.arch, url, release.URL)
 			}
 		} else {
 			// Pour les plateformes supportées, on s'attend à avoir l'URL de l'asset correspondant
 			if !strings.Contains(url, tc.expectedAsset) {
-				t.Errorf("GetUpdateAssetURL pour %s/%s = %s, devrait contenir %s", 
+				t.Errorf("GetUpdateAssetURL pour %s/%s = %s, devrait contenir %s",
 					tc.platform, tc.arch, url, tc.expectedAsset)
 			}
 		}
@@ -242,32 +242,32 @@ func TestCheckForUpdates(t *testing.T) {
 		}`))
 	}))
 	defer server.Close()
-	
+
 	// Sauvegarder les fonctions et variables d'origine
 	origGithubAPI := githubAPI
 	defer func() {
 		githubAPI = origGithubAPI
 	}()
-	
+
 	// Utiliser une variable locale avec la même valeur
 	testAPI := server.URL
 	// Utiliser cette variable dans la fonction de test
 	githubAPI = testAPI
-	
+
 	// Créer un dossier temporaire pour les tests
 	tempDir := t.TempDir()
-	
+
 	// Redéfinir getUpdateTimestampPath
 	origGetUpdateTimestampPath := getUpdateTimestampPath
 	defer func() { getUpdateTimestampPath = origGetUpdateTimestampPath }()
-	
+
 	getUpdateTimestampPath = func() string {
 		return filepath.Join(tempDir, "update_timestamp")
 	}
-	
+
 	// Forcer une vérification en s'assurant que le fichier timestamp n'existe pas
 	os.Remove(getUpdateTimestampPath())
-	
+
 	// Test avec une version courante inférieure
 	release, hasUpdate := CheckForUpdates("1.0.0")
 	if !hasUpdate {
@@ -279,13 +279,13 @@ func TestCheckForUpdates(t *testing.T) {
 	if release.TagName != "v2.0.0" {
 		t.Errorf("release.TagName = %s, attendu v2.0.0", release.TagName)
 	}
-	
+
 	// Test avec une version courante égale
-	release, hasUpdate = CheckForUpdates("2.0.0")
+	_, hasUpdate = CheckForUpdates("2.0.0")
 	if hasUpdate {
 		t.Error("CheckForUpdates devrait retourner hasUpdate=false pour une version égale")
 	}
-	
+
 	// Test avec une version dev
 	release, hasUpdate = CheckForUpdates("dev")
 	if hasUpdate {

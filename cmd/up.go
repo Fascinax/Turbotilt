@@ -22,11 +22,11 @@ var upCmd = &cobra.Command{
 			logger.SetLevel(logger.DEBUG)
 			logger.Debug("Mode debug activé")
 		}
-		
+
 		if dryRun {
 			fmt.Println("🔍 Mode simulation (dry-run) activé - aucune modification ne sera appliquée")
 		}
-		
+
 		fmt.Println("🚀 Démarrage de l'environnement de développement...")
 
 		// Définir les options d'exécution
@@ -47,7 +47,7 @@ var upCmd = &cobra.Command{
 		}
 
 		if err != nil {
-			fmt.Printf("❌ Erreur lors du démarrage: %v\n", err)
+			fmt.Printf("❌ Erreur lors du marriage: %v\n", err)
 			return
 		}
 

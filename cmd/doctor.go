@@ -13,14 +13,14 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// Structure pour stocker les résultats de diagnostics
-type diagResult struct {
-	installed bool
-	version   string
-	detail    string
-	weight    int // Importance: 3 = critique, 2 = important, 1 = optionnel
-	required  bool
-}
+// Structure pour stocker les résultats de diagnostics - commented out as currently unused
+// type diagResult struct {
+// 	installed bool
+// 	version   string
+// 	detail    string
+// 	weight    int // Importance: 3 = critique, 2 = important, 1 = optionnel
+// 	required  bool
+// }
 
 var (
 	verbose          bool
@@ -29,8 +29,9 @@ var (
 	showSummary      bool
 	logFilePath      string
 	validateManifest bool
-	checkTiltfile    bool
-	fixMode          bool
+	// Commented out as currently unused
+	// checkTiltfile    bool
+	// fixMode          bool
 )
 
 var doctorCmd = &cobra.Command{

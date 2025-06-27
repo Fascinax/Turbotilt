@@ -45,12 +45,12 @@ func (w *AutoUpdateWatcher) Start() error {
 	if w.isRunning {
 		return fmt.Errorf("auto-update watcher already running")
 	}
-	
+
 	logger.Info("Starting auto-update watcher for %s", w.tiltfilePath)
 	w.isRunning = true
-	
+
 	go w.watchLoop()
-	
+
 	return nil
 }
 
@@ -59,7 +59,7 @@ func (w *AutoUpdateWatcher) Stop() {
 	if !w.isRunning {
 		return
 	}
-	
+
 	w.stopChan <- struct{}{}
 	w.isRunning = false
 	logger.Info("Stopped auto-update watcher for %s", w.tiltfilePath)
@@ -80,7 +80,7 @@ func (w *AutoUpdateWatcher) WaitForUpdate(timeout time.Duration) bool {
 	if !w.isRunning {
 		return false
 	}
-	
+
 	select {
 	case <-time.After(timeout):
 		return false
@@ -93,7 +93,7 @@ func (w *AutoUpdateWatcher) WaitForUpdate(timeout time.Duration) bool {
 func (w *AutoUpdateWatcher) watchLoop() {
 	ticker := time.NewTicker(w.checkInterval)
 	defer ticker.Stop()
-	
+
 	for {
 		select {
 		case <-w.stopChan:
@@ -108,7 +108,7 @@ func (w *AutoUpdateWatcher) watchLoop() {
 func (w *AutoUpdateWatcher) checkForChanges() {
 	// Scan for file changes that would affect the Tiltfile
 	changed := w.detectFileChanges()
-	
+
 	if changed {
 		logger.Info("Detected changes, updating Tiltfile...")
 		err := w.updateTiltfile()
@@ -134,14 +134,14 @@ func (w *AutoUpdateWatcher) detectFileChanges() bool {
 		filepath.Join(w.projectRoot, "docker-compose.yml"),
 		filepath.Join(w.projectRoot, "Dockerfile"),
 	}
-	
+
 	for _, src := range sources {
 		if fileChanged(src, w.lastCheckTime) {
 			w.lastCheckTime = time.Now()
 			return true
 		}
 	}
-	
+
 	return false
 }
 
@@ -153,16 +153,16 @@ func (w *AutoUpdateWatcher) updateTiltfile() error {
 	if err != nil {
 		return fmt.Errorf("failed to read template: %w", err)
 	}
-	
+
 	// Generate new Tiltfile content (here we'd normally call the renderer)
 	content := string(templateContent)
-	
+
 	// Write the updated content to the file
 	err = os.WriteFile(w.tiltfilePath, []byte(content), 0644)
 	if err != nil {
 		return fmt.Errorf("failed to write Tiltfile: %w", err)
 	}
-	
+
 	return nil
 }
 
@@ -173,6 +173,6 @@ func fileChanged(filepath string, since time.Time) bool {
 		// If the file doesn't exist or can't be accessed, consider it unchanged
 		return false
 	}
-	
+
 	return info.ModTime().After(since)
 }

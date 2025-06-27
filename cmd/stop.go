@@ -5,6 +5,8 @@ import (
 	"os/exec"
 
 	"github.com/spf13/cobra"
+
+	"turbotilt/internal/logger"
 )
 
 var stopCmd = &cobra.Command{
@@ -41,7 +43,9 @@ var stopCmd = &cobra.Command{
 
 			for _, file := range filesToClean {
 				cleanFile := exec.Command("powershell.exe", "-Command", fmt.Sprintf("Remove-Item -Path '%s' -ErrorAction SilentlyContinue", file))
-				cleanFile.Run()
+				if err := cleanFile.Run(); err != nil {
+					logger.Debug("Failed to clean file %s: %v", file, err)
+				}
 			}
 
 			fmt.Println("✅ Fichiers temporaires nettoyés.")

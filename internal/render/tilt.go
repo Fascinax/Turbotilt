@@ -20,11 +20,12 @@ type TiltfileTemplateData struct {
 }
 
 // Template de base pour le Tiltfile multi-service au cas où le fichier de template n'existe pas
-const tiltfileTemplateMulti = `# Tiltfile généré par Turbotilt
-# Date: {{.Date}}
-
-k8s_yaml('docker-compose.yml')
-`
+// Commented out as it's currently not used
+// const tiltfileTemplateMulti = `# Tiltfile généré par Turbotilt
+// # Date: {{.Date}}
+//
+// k8s_yaml('docker-compose.yml')
+// `
 
 // GenerateTiltfile génère un Tiltfile personnalisé pour le projet mono-service
 func GenerateTiltfile(opts Options) error {
@@ -78,9 +79,9 @@ func GenerateTiltfile(opts Options) error {
 	// Charger le template depuis le fichier
 	// Chercher les templates dans cet ordre : répertoire courant, répertoire du projet, répertoire parent
 	tmplPaths := []string{
-		"templates/Tiltfile.tmpl", 
+		"templates/Tiltfile.tmpl",
 		"../templates/Tiltfile.tmpl",
-		"Tiltfile.tmpl",  // Pour les tests qui créent le template directement
+		"Tiltfile.tmpl", // Pour les tests qui créent le template directement
 	}
 	var tmpl *template.Template
 	var templateErr error
@@ -158,8 +159,8 @@ func GenerateMultiServiceTiltfile(serviceList ServiceList) error {
 		"../templates/Tiltfile.multi.tmpl",
 		"templates/Tiltfile.tmpl",
 		"../templates/Tiltfile.tmpl",
-		"Tiltfile.multi.tmpl",  // Pour les tests qui créent le template directement
-		"Tiltfile.tmpl",        // Pour les tests qui créent le template directement
+		"Tiltfile.multi.tmpl", // Pour les tests qui créent le template directement
+		"Tiltfile.tmpl",       // Pour les tests qui créent le template directement
 	}
 
 	var tmpl *template.Template
@@ -233,15 +234,16 @@ func mustReadFile(path string) []byte {
 	return data
 }
 
+// Commented out as it's currently not used
 // createTestTemplate creates a template file for testing and returns its path
-func createTestTemplate(content, filename string) (string, error) {
-	// Create in current directory for tests
-	err := os.WriteFile(filename, []byte(content), 0644)
-	if err != nil {
-		return "", err
-	}
-	return filename, nil
-}
+// func createTestTemplate(content, filename string) (string, error) {
+// 	// Create in current directory for tests
+// 	err := os.WriteFile(filename, []byte(content), 0644)
+// 	if err != nil {
+// 		return "", err
+// 	}
+// 	return filename, nil
+// }
 
 // Note: La constante tiltfileTemplateMulti et la fonction generateMultiServiceTiltfile
 // ont été déplacées en haut du fichier pour éviter la duplication.

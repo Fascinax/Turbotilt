@@ -41,16 +41,16 @@ func TiltUp(opts RunOptions) error {
 
 	fmt.Println("🚀 Démarrage avec Tilt...")
 	args := []string{"up"}
-	
+
 	if opts.Debug {
 		args = append(args, "--debug")
 	}
-	
+
 	if opts.DryRun {
 		fmt.Printf("🔍 [DRY-RUN] Commande qui serait exécutée: tilt %s\n", args)
 		return nil
 	}
-	
+
 	cmd := execCommand("tilt", args...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
@@ -72,12 +72,12 @@ func ComposeUp(opts RunOptions) error {
 		fmt.Printf("🔍 Démarrage du service spécifique: %s\n", opts.ServiceName)
 		args = append(args, opts.ServiceName)
 	}
-	
+
 	if opts.DryRun {
 		fmt.Printf("🔍 [DRY-RUN] Commande qui serait exécutée: docker %s\n", args)
 		return nil
 	}
-	
+
 	cmd := execCommand("docker", args...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr

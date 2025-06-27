@@ -64,7 +64,7 @@ func TestGetLang(t *testing.T) {
 
 func TestT(t *testing.T) {
 	translator := NewTranslator()
-	
+
 	// Ajout de traductions pour le test
 	if translator.translations["fr"] == nil {
 		translator.translations["fr"] = make(map[string]string)
@@ -72,34 +72,34 @@ func TestT(t *testing.T) {
 	if translator.translations["en"] == nil {
 		translator.translations["en"] = make(map[string]string)
 	}
-	
+
 	translator.translations["fr"]["test_key"] = "Valeur de test"
 	translator.translations["en"]["test_key"] = "Test value"
 	translator.translations["fr"]["test_format"] = "Valeur %s avec %d paramètres"
 	translator.translations["en"]["test_format"] = "Value %s with %d parameters"
-	
+
 	// Test avec la langue par défaut (français)
 	translator.currentLang = "fr" // Forcer la langue française
 	if msg := translator.T("test_key"); msg != "Valeur de test" {
 		t.Errorf("T devrait retourner 'Valeur de test', mais a retourné %s", msg)
 	}
-	
+
 	// Test avec une autre langue
 	translator.SetLang("en")
 	if msg := translator.T("test_key"); msg != "Test value" {
 		t.Errorf("T devrait retourner 'Test value', mais a retourné %s", msg)
 	}
-	
+
 	// Test avec des paramètres de formatage
 	if msg := translator.T("test_format", "test", 2); msg != "Value test with 2 parameters" {
 		t.Errorf("T devrait retourner 'Value test with 2 parameters', mais a retourné %s", msg)
 	}
-	
+
 	// Test avec une clé non existante
 	if msg := translator.T("nonexistent_key"); msg != "nonexistent_key" {
 		t.Errorf("T devrait retourner la clé elle-même, mais a retourné %s", msg)
 	}
-	
+
 	// Test avec une clé existante dans la langue par défaut mais pas dans la langue courante
 	translator.translations["fr"]["only_fr"] = "Seulement en français"
 	translator.SetLang("en")
@@ -111,7 +111,7 @@ func TestT(t *testing.T) {
 func TestLoadTranslations(t *testing.T) {
 	// Créer un répertoire temporaire pour les fichiers de traduction
 	tempDir := t.TempDir()
-	
+
 	// Créer un fichier de traduction test.json
 	testContent := `{
 		"test_key": "Test translation",
@@ -120,28 +120,28 @@ func TestLoadTranslations(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(tempDir, "test.json"), []byte(testContent), 0644); err != nil {
 		t.Fatalf("Impossible de créer le fichier de traduction: %v", err)
 	}
-	
+
 	// Créer un fichier non-JSON
 	if err := os.WriteFile(filepath.Join(tempDir, "not-json.txt"), []byte("Not a JSON file"), 0644); err != nil {
 		t.Fatalf("Impossible de créer le fichier non-JSON: %v", err)
 	}
-	
+
 	translator := NewTranslator()
 	if err := translator.LoadTranslations(tempDir); err != nil {
 		t.Fatalf("LoadTranslations a retourné une erreur: %v", err)
 	}
-	
+
 	// Vérifier que la traduction a été chargée
 	if _, ok := translator.translations["test"]; !ok {
 		t.Error("La langue 'test' n'a pas été chargée")
 	}
-	
+
 	// Changer la langue et tester la traduction
 	translator.SetLang("test")
 	if msg := translator.T("test_key"); msg != "Test translation" {
 		t.Errorf("T devrait retourner 'Test translation', mais a retourné %s", msg)
 	}
-	
+
 	// Test avec un dossier inexistant
 	if err := translator.LoadTranslations("/nonexistent"); err == nil {
 		t.Error("LoadTranslations devrait retourner une erreur pour un dossier inexistant")
@@ -151,29 +151,29 @@ func TestLoadTranslations(t *testing.T) {
 func TestGlobalTranslator(t *testing.T) {
 	// Réinitialiser le traducteur global
 	global = nil
-	
+
 	// Initialiser le traducteur global
 	Init()
-	
+
 	// Forcer la langue française
 	global.currentLang = "fr"
-	
+
 	// Ajouter une traduction de test
 	if global.translations["fr"] == nil {
 		global.translations["fr"] = make(map[string]string)
 	}
 	global.translations["fr"]["test_key"] = "Clé de test"
-	
+
 	// Test de la fonction T globale
 	if msg := T("test_key"); msg != "Clé de test" {
 		t.Errorf("T global devrait retourner 'Clé de test', mais a retourné %s", msg)
 	}
-	
+
 	// Test de SetLanguage
 	if !SetLanguage("en") {
 		t.Error("SetLanguage devrait retourner true pour une langue supportée")
 	}
-	
+
 	// Vérifier que la langue a été changée
 	if global.currentLang != "en" {
 		t.Errorf("La langue devrait être 'en', mais elle est %s", global.currentLang)
