@@ -1,0 +1,11 @@
+# Exemple simple pour un projet Spring Boot unique
+services:
+  - name: spring-app
+    path: .
+    java: "17"
+    build: maven
+    runtime: spring
+    port: "8080"
+    devMode: true
+    env:
+      SPRING_PROFILES_ACTIVE: dev

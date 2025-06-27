@@ -1,11 +1,11 @@
 # Turbotilt - Tiltfile généré automatiquement
-# Framework: quarkus
+# Framework: spring
 
 docker_build('app', '.', 
   dockerfile='Dockerfile',
   live_update=[
     sync('./src/main/java', '/app/./src/main/java'),
-    # Rechargement à chaud pour Quarkus
+    # Rechargement à chaud pour Spring
     run('touch /app/src/main/resources/application.properties', trigger=['./src/main/java/**/*.java']),
 
     run('echo "Files synced to container at $(date)"', trigger=['./src/main/java'])
@@ -14,12 +14,12 @@ docker_build('app', '.',
 
 # Configuration spécifique
 
-# Quarkus configuration
-# Hot reload using Quarkus Dev Services
+# Spring Boot configuration
+# Hot reload using Spring DevTools
 
 
 # Mode: Development
 
-# Port: 9090
+# Port: 8080
 
 k8s_yaml('docker-compose.yml')

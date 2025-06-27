@@ -1,0 +1,48 @@
+# Exemple de fichier turbotilt.yaml pour un projet multi-services
+services:
+  # Service principal (API)
+  - name: api-service
+    path: ./services/api
+    java: "17"
+    build: maven
+    runtime: spring
+    port: "8080"
+    devMode: true
+    watchPaths:
+      - src/main/java
+      - src/main/resources
+    env:
+      SPRING_PROFILES_ACTIVE: dev
+      LOGGING_LEVEL_ROOT: INFO
+
+  # Service secondaire (Auth)
+  - name: auth-service
+    path: ./services/auth
+    java: "17"
+    build: maven
+    runtime: quarkus
+    port: "8081"
+    devMode: true
+    env:
+      QUARKUS_PROFILE: dev
+
+  # Service de base de données (MySQL)
+  - name: db
+    type: mysql
+    version: "8.0"
+    port: "3306"
+    env:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: appdb
+      MYSQL_USER: appuser
+      MYSQL_PASSWORD: apppassword
+    volumes:
+      - mysql-data:/var/lib/mysql
+
+  # Service de cache (Redis)
+  - name: cache
+    type: redis
+    version: "6.2"
+    port: "6379"
+    volumes:
+      - redis-data:/data

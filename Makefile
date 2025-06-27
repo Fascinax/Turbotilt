@@ -11,6 +11,8 @@ GO=$(shell where go 2>nul || which go)
 GOTEST=$(GO) test
 GOVET=$(GO) vet
 GOBUILD=$(GO) build
+GOFMT=$(GO) fmt
+GOLINT=golangci-lint
 
 # Build targets per platform
 PLATFORMS=linux windows darwin
@@ -21,7 +23,7 @@ RELEASE_DIR=release
 DIST_DIR=dist
 
 # Cibles
-.PHONY: all build clean test coverage vet lint release dist $(PLATFORMS) $(ARCHITECTURES)
+.PHONY: all build clean test coverage vet lint release dist install docs examples $(PLATFORMS) $(ARCHITECTURES)
 
 all: test build
 
@@ -93,6 +95,27 @@ install-dev-deps:
 	@echo "Installation des dépendances de développement..."
 	go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
 
+install:
+	@echo "Installation de $(BINARY_NAME)..."
+	@mkdir -p $(HOME)/.local/bin
+	@cp $(BINARY_NAME) $(HOME)/.local/bin/$(BINARY_NAME)
+	@chmod +x $(HOME)/.local/bin/$(BINARY_NAME)
+	@echo "Installé dans $(HOME)/.local/bin/$(BINARY_NAME)"
+	@echo "Assurez-vous que ce chemin est dans votre PATH"
+
+docs:
+	@echo "Génération de la documentation Go..."
+	@mkdir -p docs
+	godoc -http=:8080 -index
+
+examples:
+	@echo "Vérification des exemples..."
+	@cd examples && $(GO) build -o /dev/null ./...
+
+# Support pour les tests par package
+test/%:
+	$(GOTEST) -v ./$*
+
 help:
 	@echo "Cibles disponibles:"
 	@echo "  make all        - Exécute les tests et compile le binaire"
@@ -104,3 +127,6 @@ help:
 	@echo "  make clean      - Supprime les fichiers générés"
 	@echo "  make run        - Compile et exécute le binaire"
 	@echo "  make install-dev-deps - Installe les outils de développement"
+	@echo "  make install    - Installe le binaire dans ~/.local/bin"
+	@echo "  make docs       - Génère la documentation Go"
+	@echo "  make examples    - Vérifie les exemples du projet"

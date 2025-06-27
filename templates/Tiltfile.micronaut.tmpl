@@ -1,0 +1,43 @@
+# Tiltfile pour projet Micronaut
+
+# Configuration
+custom_build(
+    '{{.AppName}}',
+    'docker build -t $EXPECTED_REF .',
+    ['./src', './pom.xml', './build.gradle'],
+    live_update=[
+        sync('./src', '/app/src'),
+        {{if eq .BuildSystem "maven"}}
+        run('./mvnw compile', trigger=['./src/main/java']),
+        run('./mvnw resources:resources', trigger=['./src/main/resources']),
+        {{else if eq .BuildSystem "gradle"}}
+        run('./gradlew classes', trigger=['./src/main/java']),
+        run('./gradlew processResources', trigger=['./src/main/resources']),
+        {{end}}
+        restart_container()
+    ]
+)
+
+# Configuration Docker Compose
+docker_compose('docker-compose.yml')
+
+# Port forwarding
+k8s_resource('{{.AppName}}', port_forwards='{{.Port}}:{{.Port}}')
+
+# Ressources locales
+local_resource(
+    '{{.AppName}}-logs',
+    'echo "Watching logs for {{.AppName}}..."',
+    labels=['logs']
+)
+
+# Meilleure UX pour les erreurs de compilation
+k8s_resource('{{.AppName}}', resource_deps=['{{.AppName}}-logs'])
+
+# Informations de démarrage
+print("""
+🚀 Turbotilt lancé pour {{.AppName}} (Micronaut)
+📋 Commandes disponibles:
+    - ctrl-c: arrêter Tilt
+    - spacebar: ouvrir l'interface web Tilt
+""")

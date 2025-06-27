@@ -3,6 +3,11 @@
 > **Initialisation, lancement et diagnostic d'environnements de développement** pour projets Java (Spring Boot, Quarkus, Micronaut…), avec support de Tilt pour le live reload.
 
 ![status-badge](https://img.shields.io/badge/status-beta-orange)
+![version](https://img.shields.io/github/v/release/Fascinax/turbotilt?include_prereleases)
+![license](https://img.shields.io/github/license/Fascinax/turbotilt)
+![go-version](https://img.shields.io/github/go-mod/go-version/Fascinax/turbotilt)
+[![ci](https://github.com/Fascinax/turbotilt/actions/workflows/ci.yml/badge.svg)](https://github.com/Fascinax/turbotilt/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/Fascinax/turbotilt/branch/main/graph/badge.svg)](https://codecov.io/gh/Fascinax/turbotilt)
 
 ---
 

@@ -1,0 +1,48 @@
+FROM eclipse-temurin:{{.JdkVersion}}-jdk AS build
+
+WORKDIR /app
+
+{{if eq .BuildSystem "maven"}}
+# Copier le fichier POM et installer les dépendances
+COPY ./pom.xml ./
+COPY ./mvnw ./mvnw
+COPY ./.mvn ./.mvn
+RUN chmod +x ./mvnw
+RUN ./mvnw dependency:go-offline -B
+
+# Copier le reste du code source et construire
+COPY ./src ./src
+RUN ./mvnw package -Dmicronaut.native-image.base-image=eclipse-temurin:{{.JdkVersion}}-jdk
+{{else if eq .BuildSystem "gradle"}}
+# Copier les fichiers Gradle et installer les dépendances
+COPY ./build.gradle ./
+COPY ./settings.gradle ./
+COPY ./gradlew ./gradlew
+COPY ./gradle ./gradle
+RUN chmod +x ./gradlew
+RUN ./gradlew dependencies
+
+# Copier le reste du code source et construire
+COPY ./src ./src
+RUN ./gradlew build
+{{end}}
+
+# Étape runtime
+FROM eclipse-temurin:{{.JdkVersion}}-jre
+
+WORKDIR /app
+
+{{if eq .BuildSystem "maven"}}
+COPY --from=build /app/target/{{.AppName}}*.jar /app/application.jar
+{{else if eq .BuildSystem "gradle"}}
+COPY --from=build /app/build/libs/{{.AppName}}*.jar /app/application.jar
+{{end}}
+
+# Variables d'environnement
+ENV MICRONAUT_ENVIRONMENTS=prod
+
+# Exposition du port
+EXPOSE {{.Port}}
+
+# Commande d'exécution
+ENTRYPOINT ["java", "-jar", "/app/application.jar"]

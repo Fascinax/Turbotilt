@@ -1,0 +1,28 @@
+# turbotilt.yaml - Exemple de configuration déclarative
+services:
+  # Service principal
+  - name: api
+    path: .
+    java: "17"
+    build: maven
+    runtime: spring
+    port: "8080"
+    devMode: true
+    env:
+      SPRING_PROFILES_ACTIVE: dev
+    watchPaths:
+      - src/main/java
+      - src/main/resources
+
+  # Base de données MySQL
+  - name: db
+    type: mysql
+    version: "8.0"
+    port: "3306"
+    env:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: appdb
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
+    volumes:
+      - mysql-data:/var/lib/mysql

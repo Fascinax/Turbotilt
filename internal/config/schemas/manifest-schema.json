@@ -1,0 +1,111 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Turbotilt Manifest Schema",
+  "description": "Schema for validating turbotilt.yaml manifest files",
+  "type": "object",
+  "required": ["services"],
+  "properties": {
+    "services": {
+      "type": "array",
+      "description": "Liste des services configurés",
+      "items": {
+        "type": "object",
+        "required": ["name"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Nom du service"
+          },
+          "path": {
+            "type": "string",
+            "description": "Chemin relatif vers le service"
+          },
+          "java": {
+            "type": "string",
+            "description": "Version de Java à utiliser",
+            "examples": ["17", "21"]
+          },
+          "build": {
+            "type": "string",
+            "description": "Système de build à utiliser",
+            "enum": ["maven", "gradle"]
+          },
+          "runtime": {
+            "type": "string",
+            "description": "Framework Java utilisé",
+            "enum": ["spring", "quarkus", "micronaut"]
+          },
+          "port": {
+            "type": "string",
+            "description": "Port exposé par le service",
+            "pattern": "^[0-9]+$"
+          },
+          "devMode": {
+            "type": "boolean",
+            "description": "Activer le mode développement avec live reload"
+          },
+          "type": {
+            "type": "string",
+            "description": "Type de service (pour les services dépendants)",
+            "enum": ["mysql", "postgres", "mongodb", "redis", "kafka", "rabbitmq", "elasticsearch"]
+          },
+          "version": {
+            "type": "string",
+            "description": "Version du service (pour les services dépendants)"
+          },
+          "env": {
+            "type": "object",
+            "description": "Variables d'environnement",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "volumes": {
+            "type": "array",
+            "description": "Montages de volumes",
+            "items": {
+              "type": "string"
+            }
+          },
+          "watchPaths": {
+            "type": "array",
+            "description": "Chemins à surveiller pour le live reload",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "runtime": {
+                  "type": "string",
+                  "enum": ["spring", "quarkus", "micronaut"]
+                }
+              },
+              "required": ["runtime"]
+            },
+            "then": {
+              "required": ["path", "port"]
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "enum": ["mysql", "postgres", "mongodb", "redis", "kafka", "rabbitmq", "elasticsearch"]
+                }
+              },
+              "required": ["type"]
+            },
+            "then": {
+              "required": ["version"]
+            }
+          }
+        ]
+      }
+    }
+  }
+}

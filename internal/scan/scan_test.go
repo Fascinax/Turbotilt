@@ -2,6 +2,7 @@ package scan
 
 import (
 	"os"
+	"path/filepath"
 	"testing"
 )
 
@@ -163,4 +164,129 @@ dependencies {
 			t.Errorf("Framework détecté incorrect. Attendu: %s, Obtenu: %s", "unknown", framework)
 		}
 	})
+}
+
+// TestDetectors teste que tous les détecteurs sont correctement appelés
+func TestDetectors(t *testing.T) {
+	testCases := []struct {
+		name         string
+		mockFiles    map[string]string
+		expectedType string
+	}{
+		{
+			name: "Spring Boot",
+			mockFiles: map[string]string{
+				"pom.xml": `<project>
+					<dependencies>
+						<dependency>
+							<groupId>org.springframework.boot</groupId>
+							<artifactId>spring-boot-starter</artifactId>
+						</dependency>
+					</dependencies>
+				</project>`,
+				"src/main/java/com/example/App.java": `
+					package com.example;
+					import org.springframework.boot.SpringApplication;
+					import org.springframework.boot.autoconfigure.SpringBootApplication;
+					
+					@SpringBootApplication
+					public class App {
+						public static void main(String[] args) {
+							SpringApplication.run(App.class, args);
+						}
+					}
+				`,
+			},
+			expectedType: "spring",
+		},
+		{
+			name: "Quarkus",
+			mockFiles: map[string]string{
+				"pom.xml": `<project>
+					<dependencies>
+						<dependency>
+							<groupId>io.quarkus</groupId>
+							<artifactId>quarkus-core</artifactId>
+						</dependency>
+					</dependencies>
+				</project>`,
+				"src/main/java/com/example/App.java": `
+					package com.example;
+					import io.quarkus.runtime.Quarkus;
+					
+					public class App {
+						public static void main(String[] args) {
+							Quarkus.run(args);
+						}
+					}
+				`,
+			},
+			expectedType: "quarkus",
+		},
+		{
+			name: "Micronaut",
+			mockFiles: map[string]string{
+				"pom.xml": `<project>
+					<dependencies>
+						<dependency>
+							<groupId>io.micronaut</groupId>
+							<artifactId>micronaut-core</artifactId>
+						</dependency>
+					</dependencies>
+				</project>`,
+				"src/main/java/com/example/App.java": `
+					package com.example;
+					import io.micronaut.runtime.Micronaut;
+					
+					public class App {
+						public static void main(String[] args) {
+							Micronaut.run(App.class, args);
+						}
+					}
+				`,
+			},
+			expectedType: "micronaut",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			// Créer un répertoire temporaire
+			tempDir, err := os.MkdirTemp("", "detector-test")
+			if err != nil {
+				t.Fatalf("Erreur lors de la création du répertoire temporaire: %v", err)
+			}
+			defer os.RemoveAll(tempDir)
+
+			// Créer les fichiers simulés
+			for path, content := range tc.mockFiles {
+				fullPath := filepath.Join(tempDir, path)
+				dirPath := filepath.Dir(fullPath)
+
+				if err := os.MkdirAll(dirPath, 0755); err != nil {
+					t.Fatalf("Erreur lors de la création du répertoire %s: %v", dirPath, err)
+				}
+
+				if err := os.WriteFile(fullPath, []byte(content), 0644); err != nil {
+					t.Fatalf("Erreur lors de la création du fichier %s: %v", fullPath, err)
+				}
+			}
+
+			// Exécuter le scanner
+			scanner := NewScanner(tempDir)
+			framework, result, err := scanner.DetectFramework()
+
+			if err != nil {
+				t.Errorf("Erreur lors de la détection: %v", err)
+			}
+
+			if framework != tc.expectedType {
+				t.Errorf("Framework détecté incorrect: %s, attendu: %s", framework, tc.expectedType)
+			}
+
+			if result.Framework != tc.expectedType {
+				t.Errorf("Framework dans le résultat incorrect: %s, attendu: %s", result.Framework, tc.expectedType)
+			}
+		})
+	}
 }
