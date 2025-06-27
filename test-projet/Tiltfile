@@ -1,0 +1,16 @@
+# Turbotilt - Tiltfile généré automatiquement
+
+docker_build('app', '.', 
+  dockerfile='Dockerfile',
+  live_update=[
+    sync('./src/main/java', '/app/./src/main/java'),
+    run('echo "Files synced to container"', trigger=['./src/main/java'])
+  ]
+)
+
+# Configuration spécifique pour spring
+
+# Configuration Spring Boot
+
+
+k8s_yaml('docker-compose.yml')
