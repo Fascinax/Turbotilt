@@ -1,10 +1,10 @@
-FROM eclipse-temurin:17 AS build
+FROM quay.io/quarkus/ubi-quarkus-native-image:22.3-java21 AS build
 WORKDIR /app
 COPY . .
-RUN ./mvnw package -DskipTests
+RUN ./mvnw package -Pnative -DskipTests
 
-FROM eclipse-temurin:17
+FROM quay.io/quarkus/quarkus-micro-image:2.0
 WORKDIR /app
-COPY --from=build /app/target/*.jar app.jar
-EXPOSE 8080
-CMD ["java", "-jar", "app.jar"]
+COPY --from=build /app/target/*-runner /app/application
+EXPOSE 9090
+CMD ["./application", "-Dquarkus.http.host=0.0.0.0"]

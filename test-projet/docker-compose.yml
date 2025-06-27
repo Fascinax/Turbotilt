@@ -3,8 +3,9 @@ services:
   app:
     build: .
     ports:
-      - '8080:8080'
+      - '9090:9090'
     volumes:
       - './src:/app/src'
     environment:
-      - SPRING_PROFILES_ACTIVE=dev
+      - QUARKUS_PROFILE=dev
+
