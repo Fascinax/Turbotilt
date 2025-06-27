@@ -3,6 +3,7 @@ package render
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 	"turbotilt/internal/scan"
 )
@@ -15,6 +16,7 @@ type ComposeServiceDefinition struct {
 	Environment map[string]string
 	Volumes     []string
 	DependsOn   []string
+	EnvFile     string
 }
 
 // GenerateComposeWithServices génère un docker-compose.yml incluant les services détectés
@@ -47,6 +49,13 @@ func GenerateComposeWithServices(opts Options) error {
 			fmt.Sprintf("%s/src:/app/src", servicePath),
 		},
 		Environment: make(map[string]string),
+	}
+
+	// Vérifier si un fichier d'environnement existe
+	envFile := getEnvFilePath(servicePath)
+	if envFile != "" {
+		// Ajouter le fichier d'environnement au service
+		appService.EnvFile = envFile
 	}
 
 	// Configurer l'environnement selon le framework
@@ -200,6 +209,12 @@ func GenerateComposeWithServices(opts Options) error {
 			sb.WriteString(fmt.Sprintf("      - '%s'\n", service.Port))
 		}
 
+		// Ajouter le fichier d'environnement si présent
+		if service.EnvFile != "" {
+			sb.WriteString("    env_file:\n")
+			sb.WriteString(fmt.Sprintf("      - %s\n", service.EnvFile))
+		}
+
 		if len(service.Environment) > 0 {
 			sb.WriteString("    environment:\n")
 			for k, v := range service.Environment {
@@ -253,6 +268,19 @@ func getFromCredentials(credentials map[string]string, key, defaultValue string)
 	return defaultValue
 }
 
+// getEnvFilePath vérifie si un fichier d'environnement existe pour un service
+func getEnvFilePath(servicePath string) string {
+	// Construire le chemin vers le fichier d'environnement
+	envPath := filepath.Join(servicePath, "envs", "local.env")
+
+	// Vérifier si le fichier existe
+	if _, err := os.Stat(envPath); err == nil {
+		return envPath
+	}
+
+	return ""
+}
+
 // GenerateMultiServiceCompose génère un docker-compose.yml pour un projet multi-services déclaré dans le manifeste
 func GenerateMultiServiceCompose(serviceList ServiceList) error {
 	f, err := os.Create("docker-compose.yml")
@@ -290,6 +318,13 @@ func GenerateMultiServiceCompose(serviceList ServiceList) error {
 		sb.WriteString(fmt.Sprintf("      - '%s:%s'\n", opts.Port, opts.Port))
 		sb.WriteString("    volumes:\n")
 		sb.WriteString(fmt.Sprintf("      - '%s:/app'\n", servicePath))
+
+		// Vérifier si un fichier d'environnement existe
+		envFile := getEnvFilePath(servicePath)
+		if envFile != "" {
+			sb.WriteString("    env_file:\n")
+			sb.WriteString(fmt.Sprintf("      - %s\n", envFile))
+		}
 
 		// Variables d'environnement selon le framework
 		sb.WriteString("    environment:\n")

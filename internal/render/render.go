@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"text/template"
 	"turbotilt/internal/scan"
 )
@@ -134,6 +135,20 @@ CMD ["sh", "start.sh"]
 // defaultRenderer est l'instance par défaut du rendu
 var defaultRenderer DockerfileRenderer = &DefaultDockerfileRenderer{}
 
+// getEnvFilePath vérifie si un fichier d'environnement existe pour un service
+// en recherchant dans le dossier envs du projet
+func getEnvFilePath(servicePath string) string {
+	// Construire le chemin vers le fichier d'environnement
+	envPath := filepath.Join(servicePath, "envs", "local.env")
+
+	// Vérifier si le fichier existe
+	if _, err := os.Stat(envPath); err == nil {
+		return envPath
+	}
+
+	return ""
+}
+
 // GenerateDockerfile génère un Dockerfile adapté au framework détecté
 func GenerateDockerfile(opts Options) error {
 	f, err := os.Create("Dockerfile")
@@ -164,7 +179,38 @@ func GenerateCompose(opts Options) error {
 	}
 	defer f.Close()
 
-	tmpl := `version: '3'
+	// Vérifier si un fichier d'environnement existe
+	envFile := getEnvFilePath(".")
+
+	// Construire le template avec ou sans fichier d'environnement
+	var tmplStr string
+	if envFile != "" {
+		tmplStr = fmt.Sprintf(`version: '3'
+services:
+  app:
+    build: .
+    ports:
+      - '{{.Port}}:{{.Port}}'
+    volumes:
+      - './src:/app/src'
+    env_file:
+      - %s
+    environment:
+{{if eq .Framework "spring"}}      - SPRING_PROFILES_ACTIVE={{if .DevMode}}dev{{else}}prod{{end}}
+{{else if eq .Framework "quarkus"}}      - QUARKUS_PROFILE={{if .DevMode}}dev{{else}}prod{{end}}
+{{else if eq .Framework "micronaut"}}      - MICRONAUT_ENVIRONMENTS={{if .DevMode}}dev{{else}}prod{{end}}
+{{else}}      # Ajoutez vos variables d'environnement spécifiques ici
+{{end}}
+{{range .Services}}
+  {{.Name}}:
+    image: {{.Image}}
+    ports:
+      - '{{.Port}}'
+    environment:
+      - SPRING_PROFILES_ACTIVE={{if $.DevMode}}dev{{else}}prod{{end}}
+{{end}}`, envFile)
+	} else {
+		tmplStr = `version: '3'
 services:
   app:
     build: .
@@ -185,9 +231,10 @@ services:
       - '{{.Port}}'
     environment:
       - SPRING_PROFILES_ACTIVE={{if $.DevMode}}dev{{else}}prod{{end}}
-{{end}}
-`
-	t, err := template.New("compose").Parse(tmpl)
+{{end}}`
+	}
+
+	t, err := template.New("compose").Parse(tmplStr)
 	if err != nil {
 		return err
 	}
