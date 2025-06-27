@@ -129,12 +129,6 @@ func GenerateMultiServiceTiltfile(serviceList ServiceList) error {
 		IsMultiService: true,
 	}
 
-	// Template par défaut à utiliser si aucun fichier template n'est trouvé
-	const defaultTemplate = `# Tiltfile multi-service généré par Turbotilt (default template)
-# Date: [[.Date]]
-docker_compose('docker-compose.yml')
-`
-
 	// Essayer de charger le template
 	tmpl, err := ts.LoadTemplate("Tiltfile",
 		[]string{TemplatePathTiltfileMulti, TemplatePathTiltfile},
