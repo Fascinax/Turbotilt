@@ -27,14 +27,14 @@ all: test build
 
 build:
 	@echo "Compilation de $(BINARY_NAME)..."
-	$(GOBUILD) $(LDFLAGS) -o $(BINARY_NAME) 
+	$(GOBUILD) $(LDFLAGS) -o $(BINARY_NAME)$(if $(filter $(OS),Windows_NT),.exe,)
 
 # Cross-platform builds
 $(PLATFORMS):
 	@echo "Building for $@..."
-	@mkdir -p $(DIST_DIR)/$@-amd64
+	-@mkdir -p $(DIST_DIR)/$@-amd64
 	GOOS=$@ GOARCH=amd64 $(GOBUILD) $(LDFLAGS) -o $(DIST_DIR)/$@-amd64/$(BINARY_NAME)$(if $(filter windows,$@),.exe,)
-	@mkdir -p $(DIST_DIR)/$@-arm64
+	-@mkdir -p $(DIST_DIR)/$@-arm64
 	GOOS=$@ GOARCH=arm64 $(GOBUILD) $(LDFLAGS) -o $(DIST_DIR)/$@-arm64/$(BINARY_NAME)$(if $(filter windows,$@),.exe,)
 
 # Build for all platforms
@@ -77,12 +77,12 @@ lint:
 
 clean:
 	@echo "Nettoyage des fichiers générés..."
-	@if exist $(BINARY_NAME) del /f $(BINARY_NAME)
-	@if exist $(BINARY_NAME).exe del /f $(BINARY_NAME).exe
-	@if exist coverage.out del /f coverage.out
-	@if exist coverage.html del /f coverage.html
-	@if exist $(DIST_DIR) rmdir /s /q $(DIST_DIR)
-	@if exist $(RELEASE_DIR) rmdir /s /q $(RELEASE_DIR)
+	-@if exist $(BINARY_NAME) del /f $(BINARY_NAME)
+	-@if exist $(BINARY_NAME).exe del /f $(BINARY_NAME).exe
+	-@if exist coverage.out del /f coverage.out
+	-@if exist coverage.html del /f coverage.html
+	-@if exist $(DIST_DIR) rmdir /s /q $(DIST_DIR)
+	-@if exist $(RELEASE_DIR) rmdir /s /q $(RELEASE_DIR)
 
 run: build
 	@echo "Exécution de $(BINARY_NAME)..."

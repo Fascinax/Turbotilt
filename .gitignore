@@ -1,0 +1,32 @@
+# Binaires
+/turbotilt
+/turbotilt.exe
+
+# Dossiers de build
+/dist/
+/release/
+
+# Fichiers temporaires générés par turbotilt
+/Dockerfile
+/docker-compose.yml
+/Tiltfile
+/.turbotilt-cache/
+
+# Fichiers générés par Go
+*.o
+*.a
+*.so
+_obj
+_test
+*.test
+*.prof
+/vendor/
+
+# OS specifiques
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
