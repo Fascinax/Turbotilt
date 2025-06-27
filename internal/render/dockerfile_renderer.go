@@ -99,5 +99,4 @@ func (r *TemplateDockerfileRenderer) RenderGenericDockerfile(w io.Writer, opts O
 	return r.renderDockerfile(w, GenericDockerfileTmpl, "generic", opts)
 }
 
-// defaultRenderer est l'instance par défaut du rendu
 var defaultRenderer DockerfileRenderer = &TemplateDockerfileRenderer{}
