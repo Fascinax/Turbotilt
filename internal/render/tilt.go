@@ -27,20 +27,31 @@ type TiltfileTemplateData struct {
 // k8s_yaml('docker-compose.yml')
 // `
 
+const (
+	// DefaultTiltfileTemplate est le template par défaut pour le Tiltfile
+	DefaultTiltfileTemplate = `# Tiltfile généré par Turbotilt (default template)
+# Date: [[.Date]]
+# Framework: [[.Framework]]
+docker_compose('docker-compose.yml')
+`
+
+	// DefaultTiltfileMultiTemplate est le template par défaut pour le Tiltfile multi-service
+	DefaultTiltfileMultiTemplate = `# Tiltfile multi-service généré par Turbotilt (default template)
+# Date: [[.Date]]
+docker_compose('docker-compose.yml')
+`
+
+	// TemplatePathTiltfile est le chemin vers le fichier de template Tiltfile
+	TemplatePathTiltfile = "Tiltfile.tmpl"
+
+	// TemplatePathTiltfileMulti est le chemin vers le fichier de template Tiltfile multi-service
+	TemplatePathTiltfileMulti = "Tiltfile.multi.tmpl"
+)
+
 // GenerateTiltfile génère un Tiltfile personnalisé pour le projet mono-service
 func GenerateTiltfile(opts Options) error {
-	f, err := os.Create("Tiltfile")
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-
-	// Définir des délimiteurs personnalisés pour éviter les conflits avec la syntaxe Tilt
-	funcMap := template.FuncMap{
-		"eq": func(a, b interface{}) bool {
-			return a == b
-		},
-	}
+	// Initialiser le service de templates
+	ts := NewTemplateService()
 
 	// Préparer les données pour le template
 	appName := "app"
@@ -54,7 +65,7 @@ func GenerateTiltfile(opts Options) error {
 		appName = opts.AppName
 	}
 
-	port := "8080" // Port par défaut
+	port := DefaultPort // Port par défaut
 	if opts.Port != "" {
 		port = opts.Port
 	}
@@ -76,63 +87,28 @@ func GenerateTiltfile(opts Options) error {
 		IsMultiService: false,
 	}
 
-	// Charger le template depuis le fichier
-	// Chercher les templates dans cet ordre : répertoire courant, répertoire du projet, répertoire parent
-	tmplPaths := []string{
-		"templates/Tiltfile.tmpl",
-		"../templates/Tiltfile.tmpl",
-		"Tiltfile.tmpl", // Pour les tests qui créent le template directement
-	}
-	var tmpl *template.Template
-	var templateErr error
-
-	for _, tmplPath := range tmplPaths {
-		// Vérifier si le fichier existe avant d'essayer de le parser
-		if _, statErr := os.Stat(tmplPath); statErr == nil {
-			tmpl, err = template.New("Tiltfile").Delims("[[", "]]").Funcs(funcMap).ParseFiles(tmplPath)
-			if err == nil {
-				break
-			}
-		}
-		templateErr = err
-	}
-
-	if err != nil {
-		// Si le template n'a pas été trouvé, utiliser un template par défaut
-		const defaultTemplate = `# Tiltfile généré par Turbotilt (default template)
+	// Template par défaut à utiliser si aucun fichier template n'est trouvé
+	const defaultTemplate = `# Tiltfile généré par Turbotilt (default template)
 # Date: [[.Date]]
 # Framework: [[.Framework]]
 docker_compose('docker-compose.yml')
 `
-		tmpl, err = template.New("Tiltfile").Delims("[[", "]]").Funcs(funcMap).Parse(defaultTemplate)
-		if err != nil {
-			return fmt.Errorf("erreur avec le template par défaut: %w (après %v)", err, templateErr)
-		}
-	}
 
-	// Exécuter le template
-	err = tmpl.Execute(f, data)
+	// Essayer de charger le template
+	tmpl, err := ts.LoadTemplate("Tiltfile",
+		[]string{TemplatePathTiltfile}, defaultTemplate)
 	if err != nil {
-		return err
+		return fmt.Errorf("erreur lors du chargement du template: %w", err)
 	}
 
-	return nil
+	// Générer le fichier Tiltfile
+	return ts.RenderToFile("Tiltfile", tmpl, data)
 }
 
 // GenerateMultiServiceTiltfile génère un Tiltfile pour un projet multi-services
 func GenerateMultiServiceTiltfile(serviceList ServiceList) error {
-	f, err := os.Create("Tiltfile")
-	if err != nil {
-		return fmt.Errorf("erreur création Tiltfile: %w", err)
-	}
-	defer f.Close()
-
-	// Définir des délimiteurs personnalisés pour éviter les conflits avec la syntaxe Tilt
-	funcMap := template.FuncMap{
-		"eq": func(a, b interface{}) bool {
-			return a == b
-		},
-	}
+	// Initialiser le service de templates
+	ts := NewTemplateService()
 
 	// Créer des données combinées pour tous les services
 	services := make([]map[string]interface{}, len(serviceList.Services))
@@ -153,48 +129,22 @@ func GenerateMultiServiceTiltfile(serviceList ServiceList) error {
 		IsMultiService: true,
 	}
 
-	// Chercher un template pour les projets multi-services
-	tmplPaths := []string{
-		"templates/Tiltfile.multi.tmpl",
-		"../templates/Tiltfile.multi.tmpl",
-		"templates/Tiltfile.tmpl",
-		"../templates/Tiltfile.tmpl",
-		"Tiltfile.multi.tmpl", // Pour les tests qui créent le template directement
-		"Tiltfile.tmpl",       // Pour les tests qui créent le template directement
-	}
-
-	var tmpl *template.Template
-	var templateErr error
-
-	for _, tmplPath := range tmplPaths {
-		// Vérifier si le fichier existe avant d'essayer de le parser
-		if _, statErr := os.Stat(tmplPath); statErr == nil {
-			tmpl, err = template.New("Tiltfile").Delims("[[", "]]").Funcs(funcMap).ParseFiles(tmplPath)
-			if err == nil {
-				break
-			}
-		}
-		templateErr = err
-	}
-
-	if err != nil {
-		// Si le template n'a pas été trouvé, utiliser un template par défaut
-		const defaultTemplate = `# Tiltfile multi-service généré par Turbotilt (default template)
+	// Template par défaut à utiliser si aucun fichier template n'est trouvé
+	const defaultTemplate = `# Tiltfile multi-service généré par Turbotilt (default template)
 # Date: [[.Date]]
 docker_compose('docker-compose.yml')
 `
-		tmpl, err = template.New("Tiltfile").Delims("[[", "]]").Funcs(funcMap).Parse(defaultTemplate)
-		if err != nil {
-			return fmt.Errorf("erreur parsing template: %w (après %v)", err, templateErr)
-		}
-	}
 
-	err = tmpl.Execute(f, data)
+	// Essayer de charger le template
+	tmpl, err := ts.LoadTemplate("Tiltfile",
+		[]string{TemplatePathTiltfileMulti, TemplatePathTiltfile},
+		DefaultTiltfileMultiTemplate)
 	if err != nil {
-		return fmt.Errorf("erreur exécution template: %w", err)
+		return fmt.Errorf("erreur lors du chargement du template: %w", err)
 	}
 
-	return nil
+	// Générer le fichier Tiltfile
+	return ts.RenderToFile("Tiltfile", tmpl, data)
 }
 
 // GenerateTiltfileFromTemplate génère un Tiltfile personnalisé pour le test

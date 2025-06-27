@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"path/filepath"
 	"text/template"
 	"turbotilt/internal/scan"
 )
@@ -19,6 +18,7 @@ type Options struct {
 	DevMode     bool                 // Mode développement
 	Path        string               // Chemin du service (pour les projets multi-services)
 	Services    []scan.ServiceConfig // Services dépendants détectés
+	EnvFile     string               // Chemin du fichier d'environnement
 }
 
 // ServiceList contient la liste des services pour la génération des fichiers multi-services
@@ -35,120 +35,6 @@ type DockerfileRenderer interface {
 	RenderGenericDockerfile(w io.Writer, opts Options) error
 }
 
-// DefaultDockerfileRenderer est l'implémentation par défaut de DockerfileRenderer
-type DefaultDockerfileRenderer struct{}
-
-// RenderSpringDockerfile écrit un Dockerfile pour Spring Boot
-func (r *DefaultDockerfileRenderer) RenderSpringDockerfile(w io.Writer, opts Options) error {
-	tmpl := `FROM eclipse-temurin:{{.JDKVersion}} AS build
-WORKDIR /app
-COPY . .
-RUN ./mvnw package {{if .DevMode}}-DskipTests{{end}}
-
-FROM eclipse-temurin:{{.JDKVersion}}
-WORKDIR /app
-COPY --from=build /app/target/*.jar app.jar
-EXPOSE {{.Port}}
-CMD ["java", "-jar", "app.jar"]
-`
-	t, err := template.New("spring").Parse(tmpl)
-	if err != nil {
-		return err
-	}
-	return t.Execute(w, opts)
-}
-
-// RenderQuarkusDockerfile écrit un Dockerfile pour Quarkus
-func (r *DefaultDockerfileRenderer) RenderQuarkusDockerfile(w io.Writer, opts Options) error {
-	tmpl := `FROM registry.access.redhat.com/ubi8/openjdk-{{.JDKVersion}}:latest AS build
-WORKDIR /app
-COPY . .
-RUN ./mvnw package {{if .DevMode}}-DskipTests{{end}} -Dquarkus.package.type=jar
-
-FROM registry.access.redhat.com/ubi8/openjdk-{{.JDKVersion}}:latest
-WORKDIR /app
-COPY --from=build /app/target/quarkus-app/lib/ /deployments/lib/
-COPY --from=build /app/target/quarkus-app/*.jar /deployments/
-COPY --from=build /app/target/quarkus-app/app/ /deployments/app/
-COPY --from=build /app/target/quarkus-app/quarkus/ /deployments/quarkus/
-EXPOSE {{.Port}}
-CMD ["java", "-jar", "/deployments/quarkus-run.jar"]
-`
-	t, err := template.New("quarkus").Parse(tmpl)
-	if err != nil {
-		return err
-	}
-	return t.Execute(w, opts)
-}
-
-// RenderMicronautDockerfile écrit un Dockerfile pour Micronaut
-func (r *DefaultDockerfileRenderer) RenderMicronautDockerfile(w io.Writer, opts Options) error {
-	tmpl := `FROM eclipse-temurin:{{.JDKVersion}} AS build
-WORKDIR /app
-COPY . .
-RUN ./gradlew build {{if .DevMode}}-x test{{end}}
-
-FROM eclipse-temurin:{{.JDKVersion}}
-WORKDIR /app
-COPY --from=build /app/build/libs/*-all.jar app.jar
-EXPOSE {{.Port}}
-CMD ["java", "-jar", "app.jar"]
-`
-	t, err := template.New("micronaut").Parse(tmpl)
-	if err != nil {
-		return err
-	}
-	return t.Execute(w, opts)
-}
-
-// RenderJavaDockerfile écrit un Dockerfile pour une application Java générique
-func (r *DefaultDockerfileRenderer) RenderJavaDockerfile(w io.Writer, opts Options) error {
-	tmpl := `FROM eclipse-temurin:{{.JDKVersion}}
-WORKDIR /app
-COPY . .
-RUN javac Main.java
-EXPOSE {{.Port}}
-CMD ["java", "Main"]
-`
-	t, err := template.New("java").Parse(tmpl)
-	if err != nil {
-		return err
-	}
-	return t.Execute(w, opts)
-}
-
-// RenderGenericDockerfile écrit un Dockerfile générique pour les autres types d'applications
-func (r *DefaultDockerfileRenderer) RenderGenericDockerfile(w io.Writer, opts Options) error {
-	tmpl := `FROM alpine:latest
-WORKDIR /app
-COPY . .
-EXPOSE {{.Port}}
-CMD ["sh", "start.sh"]
-`
-	t, err := template.New("generic").Parse(tmpl)
-	if err != nil {
-		return err
-	}
-	return t.Execute(w, opts)
-}
-
-// defaultRenderer est l'instance par défaut du rendu
-var defaultRenderer DockerfileRenderer = &DefaultDockerfileRenderer{}
-
-// getEnvFilePath vérifie si un fichier d'environnement existe pour un service
-// en recherchant dans le dossier envs du projet
-func getEnvFilePath(servicePath string) string {
-	// Construire le chemin vers le fichier d'environnement
-	envPath := filepath.Join(servicePath, "envs", "local.env")
-
-	// Vérifier si le fichier existe
-	if _, err := os.Stat(envPath); err == nil {
-		return envPath
-	}
-
-	return ""
-}
-
 // GenerateDockerfile génère un Dockerfile adapté au framework détecté
 func GenerateDockerfile(opts Options) error {
 	f, err := os.Create("Dockerfile")
@@ -158,13 +44,13 @@ func GenerateDockerfile(opts Options) error {
 	defer f.Close()
 
 	switch opts.Framework {
-	case "spring":
+	case FrameworkSpring:
 		return defaultRenderer.RenderSpringDockerfile(f, opts)
-	case "quarkus":
+	case FrameworkQuarkus:
 		return defaultRenderer.RenderQuarkusDockerfile(f, opts)
-	case "micronaut":
+	case FrameworkMicronaut:
 		return defaultRenderer.RenderMicronautDockerfile(f, opts)
-	case "java":
+	case FrameworkJava:
 		return defaultRenderer.RenderJavaDockerfile(f, opts)
 	default:
 		return defaultRenderer.RenderGenericDockerfile(f, opts)
@@ -185,53 +71,11 @@ func GenerateCompose(opts Options) error {
 	// Construire le template avec ou sans fichier d'environnement
 	var tmplStr string
 	if envFile != "" {
-		tmplStr = fmt.Sprintf(`version: '3'
-services:
-  app:
-    build: .
-    ports:
-      - '{{.Port}}:{{.Port}}'
-    volumes:
-      - './src:/app/src'
-    env_file:
-      - %s
-    environment:
-{{if eq .Framework "spring"}}      - SPRING_PROFILES_ACTIVE={{if .DevMode}}dev{{else}}prod{{end}}
-{{else if eq .Framework "quarkus"}}      - QUARKUS_PROFILE={{if .DevMode}}dev{{else}}prod{{end}}
-{{else if eq .Framework "micronaut"}}      - MICRONAUT_ENVIRONMENTS={{if .DevMode}}dev{{else}}prod{{end}}
-{{else}}      # Ajoutez vos variables d'environnement spécifiques ici
-{{end}}
-{{range .Services}}
-  {{.Name}}:
-    image: {{.Image}}
-    ports:
-      - '{{.Port}}'
-    environment:
-      - SPRING_PROFILES_ACTIVE={{if $.DevMode}}dev{{else}}prod{{end}}
-{{end}}`, envFile)
+		// Ajouter le chemin du fichier d'environnement aux options
+		opts.EnvFile = envFile
+		tmplStr = ComposeTemplateWithEnvFile
 	} else {
-		tmplStr = `version: '3'
-services:
-  app:
-    build: .
-    ports:
-      - '{{.Port}}:{{.Port}}'
-    volumes:
-      - './src:/app/src'
-    environment:
-{{if eq .Framework "spring"}}      - SPRING_PROFILES_ACTIVE={{if .DevMode}}dev{{else}}prod{{end}}
-{{else if eq .Framework "quarkus"}}      - QUARKUS_PROFILE={{if .DevMode}}dev{{else}}prod{{end}}
-{{else if eq .Framework "micronaut"}}      - MICRONAUT_ENVIRONMENTS={{if .DevMode}}dev{{else}}prod{{end}}
-{{else}}      # Ajoutez vos variables d'environnement spécifiques ici
-{{end}}
-{{range .Services}}
-  {{.Name}}:
-    image: {{.Image}}
-    ports:
-      - '{{.Port}}'
-    environment:
-      - SPRING_PROFILES_ACTIVE={{if $.DevMode}}dev{{else}}prod{{end}}
-{{end}}`
+		tmplStr = ComposeTemplate
 	}
 
 	t, err := template.New("compose").Parse(tmplStr)
