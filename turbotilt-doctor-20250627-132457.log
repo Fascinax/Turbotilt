@@ -1,0 +1,13 @@
+2025-06-27 13:24:57 [INFO] Log file created: turbotilt-doctor-20250627-132457.log
+2025-06-27 13:24:57 [INFO] === Diagnostic de l'environnement Turbotilt ===
+2025-06-27 13:24:57 [INFO] Démarré le 2025-06-27 13:24:57
+2025-06-27 13:24:57 [INFO] Système d'exploitation: windows
+2025-06-27 13:24:57 [INFO] Docker installé: Docker version 28.1.1, build 4eba377
+2025-06-27 13:24:58 [INFO] Docker Compose installé: Docker Compose version v2.35.1-desktop.1
+2025-06-27 13:24:58 [WARN] Tilt non installé ou inaccessible
+2025-06-27 13:24:58 [WARN] Java non installé ou inaccessible
+2025-06-27 13:24:58 [WARN] Maven non installé
+2025-06-27 13:24:58 [WARN] Gradle non installé
+2025-06-27 13:24:58 [WARN] Tilt manquant - installation recommandée
+2025-06-27 13:24:58 [INFO] Santé globale du projet: 54%
+2025-06-27 13:24:58 [INFO] Diagnostic terminé en 0.64 secondes
