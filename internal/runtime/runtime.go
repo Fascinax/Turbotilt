@@ -12,12 +12,14 @@ type RunOptions struct {
 	Detached    bool
 	TempFiles   []string
 	ServiceName string // Nom du service à démarrer (pour les projets multi-services)
+	DryRun      bool   // Mode simulation sans modifications réelles
+	Debug       bool   // Mode débug avec logs détaillés
 }
 
 // TiltUp lance Tilt avec les options spécifiées
 func TiltUp(opts RunOptions) error {
 	// Configurer le nettoyage des fichiers temporaires
-	if len(opts.TempFiles) > 0 {
+	if len(opts.TempFiles) > 0 && !opts.DryRun {
 		SetupCleanup(opts.TempFiles)
 	}
 
@@ -32,7 +34,18 @@ func TiltUp(opts RunOptions) error {
 	}
 
 	fmt.Println("🚀 Démarrage avec Tilt...")
-	cmd := exec.Command("tilt", "up")
+	args := []string{"up"}
+	
+	if opts.Debug {
+		args = append(args, "--debug")
+	}
+	
+	if opts.DryRun {
+		fmt.Printf("🔍 [DRY-RUN] Commande qui serait exécutée: tilt %s\n", args)
+		return nil
+	}
+	
+	cmd := exec.Command("tilt", args...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 
@@ -53,7 +66,12 @@ func ComposeUp(opts RunOptions) error {
 		fmt.Printf("🔍 Démarrage du service spécifique: %s\n", opts.ServiceName)
 		args = append(args, opts.ServiceName)
 	}
-
+	
+	if opts.DryRun {
+		fmt.Printf("🔍 [DRY-RUN] Commande qui serait exécutée: docker %s\n", args)
+		return nil
+	}
+	
 	cmd := exec.Command("docker", args...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr

@@ -1,0 +1,54 @@
+name: Update Homebrew Formula
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  update-homebrew-formula:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Get release version
+        id: get_version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_ENV
+
+      - name: Download release assets
+        run: |
+          mkdir -p tmp
+          for arch in amd64 arm64; do
+            for os in darwin linux; do
+              curl -L -o "tmp/${os}-${arch}.zip" "https://github.com/${{ github.repository }}/releases/download/v${VERSION}/turbotilt-${VERSION}-${os}-${arch}.zip"
+              echo "${os}-${arch} sha256: $(shasum -a 256 tmp/${os}-${arch}.zip | awk '{print $1}')"
+            done
+          done
+
+      - name: Update Homebrew formula
+        run: |
+          DARWIN_AMD64_SHA=$(shasum -a 256 tmp/darwin-amd64.zip | awk '{print $1}')
+          DARWIN_ARM64_SHA=$(shasum -a 256 tmp/darwin-arm64.zip | awk '{print $1}')
+          LINUX_AMD64_SHA=$(shasum -a 256 tmp/linux-amd64.zip | awk '{print $1}')
+          LINUX_ARM64_SHA=$(shasum -a 256 tmp/linux-arm64.zip | awk '{print $1}')
+          
+          FORMULA_PATH="scripts/homebrew/turbotilt.rb"
+          
+          sed -i "s/version \".*\"/version \"${VERSION}\"/" $FORMULA_PATH
+          sed -i "s/sha256 \"[a-f0-9]*\".*darwin-arm64/sha256 \"${DARWIN_ARM64_SHA}\"  # darwin-arm64/" $FORMULA_PATH
+          sed -i "s/sha256 \"[a-f0-9]*\".*darwin-amd64/sha256 \"${DARWIN_AMD64_SHA}\"  # darwin-amd64/" $FORMULA_PATH
+          sed -i "s/sha256 \"[a-f0-9]*\".*linux-arm64/sha256 \"${LINUX_ARM64_SHA}\"  # linux-arm64/" $FORMULA_PATH
+          sed -i "s/sha256 \"[a-f0-9]*\".*linux-amd64/sha256 \"${LINUX_AMD64_SHA}\"  # linux-amd64/" $FORMULA_PATH
+          
+          cat $FORMULA_PATH
+      
+      - name: Configure Git
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          
+      - name: Commit and push changes
+        run: |
+          git add scripts/homebrew/turbotilt.rb
+          git commit -m "Update Homebrew formula to v${VERSION}"
+          git push

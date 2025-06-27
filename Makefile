@@ -1,20 +1,62 @@
 # Makefile pour Turbotilt
 
 # Variables
-BINARY_NAME=turbotilt.exe
-GO=$(shell where go)
+BINARY_NAME=turbotilt
+VERSION=$(shell git describe --tags --always --dirty 2>/dev/null || echo "dev")
+BUILDTIME=$(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
+COMMIT=$(shell git rev-parse --short HEAD 2>/dev/null || echo "unknown")
+LDFLAGS=-ldflags "-X turbotilt/cmd.Version=$(VERSION) -X turbotilt/cmd.BuildTime=$(BUILDTIME) -X turbotilt/cmd.GitCommit=$(COMMIT)"
+
+GO=$(shell where go 2>nul || which go)
 GOTEST=$(GO) test
 GOVET=$(GO) vet
 GOBUILD=$(GO) build
 
+# Build targets per platform
+PLATFORMS=linux windows darwin
+ARCHITECTURES=amd64 arm64
+
+# Output directories
+RELEASE_DIR=release
+DIST_DIR=dist
+
 # Cibles
-.PHONY: all build clean test coverage vet lint
+.PHONY: all build clean test coverage vet lint release dist $(PLATFORMS) $(ARCHITECTURES)
 
 all: test build
 
 build:
 	@echo "Compilation de $(BINARY_NAME)..."
-	$(GOBUILD) -o $(BINARY_NAME) 
+	$(GOBUILD) $(LDFLAGS) -o $(BINARY_NAME) 
+
+# Cross-platform builds
+$(PLATFORMS):
+	@echo "Building for $@..."
+	@mkdir -p $(DIST_DIR)/$@-amd64
+	GOOS=$@ GOARCH=amd64 $(GOBUILD) $(LDFLAGS) -o $(DIST_DIR)/$@-amd64/$(BINARY_NAME)$(if $(filter windows,$@),.exe,)
+	@mkdir -p $(DIST_DIR)/$@-arm64
+	GOOS=$@ GOARCH=arm64 $(GOBUILD) $(LDFLAGS) -o $(DIST_DIR)/$@-arm64/$(BINARY_NAME)$(if $(filter windows,$@),.exe,)
+
+# Build for all platforms
+dist: clean
+	@echo "Building for all platforms..."
+	@mkdir -p $(DIST_DIR)
+	@$(MAKE) $(PLATFORMS)
+
+# Create release packages
+release: dist
+	@echo "Creating release packages..."
+	@mkdir -p $(RELEASE_DIR)
+	@for platform in $(PLATFORMS); do \
+		for arch in amd64 arm64; do \
+			echo "Packaging for $$platform-$$arch..."; \
+			cd $(DIST_DIR)/$$platform-$$arch && \
+			zip -q ../../$(RELEASE_DIR)/$(BINARY_NAME)-$(VERSION)-$$platform-$$arch.zip $(BINARY_NAME)$(if $(filter windows,$$platform),.exe,) && \
+			cd ../.. && \
+			shasum -a 256 $(RELEASE_DIR)/$(BINARY_NAME)-$(VERSION)-$$platform-$$arch.zip > $(RELEASE_DIR)/$(BINARY_NAME)-$(VERSION)-$$platform-$$arch.zip.sha256; \
+		done \
+	done
+	@echo "Release packages and checksums created in $(RELEASE_DIR) directory"
 
 test:
 	@echo "Exécution des tests..."
@@ -35,8 +77,12 @@ lint:
 
 clean:
 	@echo "Nettoyage des fichiers générés..."
-	del /f $(BINARY_NAME)
-	del /f coverage.out coverage.html
+	@if exist $(BINARY_NAME) del /f $(BINARY_NAME)
+	@if exist $(BINARY_NAME).exe del /f $(BINARY_NAME).exe
+	@if exist coverage.out del /f coverage.out
+	@if exist coverage.html del /f coverage.html
+	@if exist $(DIST_DIR) rmdir /s /q $(DIST_DIR)
+	@if exist $(RELEASE_DIR) rmdir /s /q $(RELEASE_DIR)
 
 run: build
 	@echo "Exécution de $(BINARY_NAME)..."

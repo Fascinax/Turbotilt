@@ -20,6 +20,58 @@
 
 ---
 
+## 📦 Installation
+
+Plusieurs méthodes d'installation sont disponibles:
+
+### Homebrew (macOS et Linux)
+
+```bash
+brew tap VOTRE_UTILISATEUR/turbotilt
+brew install turbotilt
+```
+
+### Script d'installation (macOS, Linux, Windows)
+
+```bash
+# macOS et Linux
+curl -fsSL https://raw.githubusercontent.com/VOTRE_UTILISATEUR/turbotilt/main/scripts/install.sh | bash
+
+# Windows PowerShell
+iwr -useb https://raw.githubusercontent.com/VOTRE_UTILISATEUR/turbotilt/main/scripts/install.ps1 | iex
+```
+
+### Téléchargement direct
+
+Téléchargez la dernière version depuis la [page des releases](https://github.com/VOTRE_UTILISATEUR/turbotilt/releases).
+
+## 🚀 Fonctionnalités avancées
+
+### Auto-update des Tiltfiles
+
+En mode développeur, Turbotilt surveille automatiquement les modifications de vos fichiers sources et met à jour les Tiltfiles en conséquence, garantissant que vos changements sont toujours pris en compte.
+
+### Flags globaux
+
+Tous les commandes acceptent ces options:
+
+- `--dry-run` : Simule l'exécution sans modifications réelles
+- `--debug` : Active le mode débogage avec sortie détaillée
+
+### Diagnostic avancé
+
+La commande `doctor` vérifie automatiquement votre environnement et fournit un rapport détaillé:
+
+```bash
+turbotilt doctor
+```
+
+Vérifie l'installation et la configuration de:
+- Docker et Docker Compose
+- Tilt pour le live reload
+- JDK et environnement Java
+- Configuration réseau et permissions
+
 ## 📦 Structure du projet
 
 ```
@@ -28,6 +80,7 @@ turbotilt/
 │   ├── root.go
 │   ├── init.go          # turbotilt init
 │   ├── up.go            # turbotilt up
+│   ├── doctor.go        # turbotilt doctor
 │   ├── doctor.go        # turbotilt doctor
 │   └── ...
 ├── internal/

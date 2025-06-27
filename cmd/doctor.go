@@ -29,6 +29,8 @@ var (
 	showSummary      bool
 	logFilePath      string
 	validateManifest bool
+	checkTiltfile    bool
+	fixMode          bool
 )
 
 var doctorCmd = &cobra.Command{
@@ -36,7 +38,12 @@ var doctorCmd = &cobra.Command{
 	Short: "Vérifie installation & config",
 	Long: `Vérifie l'installation et la configuration de l'environnement Turbotilt.
 Effectue un diagnostic complet des dépendances et outils nécessaires.
-Fournit un score de santé et des recommandations pour réparer les problèmes.`,
+Fournit un score de santé et des recommandations pour réparer les problèmes.
+
+Exemples:
+  turbotilt doctor             # Analyse complète
+  turbotilt doctor --verbose   # Analyse complète avec détails
+  turbotilt doctor --debug     # Mode debug pour information détaillée`,
 	Run: func(cmd *cobra.Command, args []string) {
 		// Enregistrer le temps de démarrage pour calculer la durée d'exécution
 		startTime := time.Now()

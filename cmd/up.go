@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"turbotilt/internal/logger"
 	"turbotilt/internal/runtime"
 
 	"github.com/spf13/cobra"
@@ -17,6 +18,15 @@ var upCmd = &cobra.Command{
 	Use:   "up",
 	Short: "Lance tilt up ou docker compose up",
 	Run: func(cmd *cobra.Command, args []string) {
+		if debugMode {
+			logger.SetLevel(logger.DEBUG)
+			logger.Debug("Mode debug activé")
+		}
+		
+		if dryRun {
+			fmt.Println("🔍 Mode simulation (dry-run) activé - aucune modification ne sera appliquée")
+		}
+		
 		fmt.Println("🚀 Démarrage de l'environnement de développement...")
 
 		// Définir les options d'exécution
@@ -25,6 +35,8 @@ var upCmd = &cobra.Command{
 			Detached:    detached,
 			TempFiles:   []string{"Dockerfile", "docker-compose.yml", "Tiltfile"},
 			ServiceName: serviceName,
+			DryRun:      dryRun,
+			Debug:       debugMode,
 		}
 
 		var err error
