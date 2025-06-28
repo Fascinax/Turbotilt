@@ -167,7 +167,83 @@ services:
 		os.Remove("docker-compose.yml")
 	})
 
-	// Test 4: Aucun service
+	// Test 4: Détection via pom.xml
+	t.Run("Dependencies from pom.xml", func(t *testing.T) {
+		pomContent := `<?xml version="1.0" encoding="UTF-8"?>
+<project>
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>com.example</groupId>
+    <artifactId>demo</artifactId>
+    <version>1.0.0</version>
+    <dependencies>
+        <dependency>
+            <groupId>mysql</groupId>
+            <artifactId>mysql-connector-java</artifactId>
+            <version>8.0.0</version>
+        </dependency>
+    </dependencies>
+</project>`
+
+		if err := os.WriteFile("pom.xml", []byte(pomContent), 0644); err != nil {
+			t.Fatalf("Erreur lors de la création du pom.xml: %v", err)
+		}
+
+		services, err := DetectServices()
+		if err != nil {
+			t.Errorf("Erreur lors de la détection des services: %v", err)
+		}
+
+		found := false
+		for _, s := range services {
+			if s.Type == MySQL {
+				found = true
+				break
+			}
+		}
+		if !found {
+			t.Errorf("Service MySQL non détecté depuis pom.xml")
+		}
+
+		os.Remove("pom.xml")
+	})
+
+	// Test 5: Détection via build.gradle
+	t.Run("Dependencies from Gradle", func(t *testing.T) {
+		gradleContent := `dependencies {
+    implementation 'org.postgresql:postgresql:42.6.0'
+    implementation 'org.apache.kafka:kafka-clients:3.5.0'
+}`
+
+		if err := os.WriteFile("build.gradle", []byte(gradleContent), 0644); err != nil {
+			t.Fatalf("Erreur lors de la création du build.gradle: %v", err)
+		}
+
+		services, err := DetectServices()
+		if err != nil {
+			t.Errorf("Erreur lors de la détection des services: %v", err)
+		}
+
+		pgFound := false
+		kafkaFound := false
+		for _, s := range services {
+			if s.Type == PostgreSQL {
+				pgFound = true
+			}
+			if s.Type == Kafka {
+				kafkaFound = true
+			}
+		}
+		if !pgFound {
+			t.Errorf("Service PostgreSQL non détecté depuis build.gradle")
+		}
+		if !kafkaFound {
+			t.Errorf("Service Kafka non détecté depuis build.gradle")
+		}
+
+		os.Remove("build.gradle")
+	})
+
+	// Test 6: Aucun service
 	t.Run("No Services", func(t *testing.T) {
 		// Ne pas créer de fichiers de configuration
 
