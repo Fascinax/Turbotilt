@@ -79,6 +79,13 @@ func Warning(format string, args ...interface{}) {
 	}
 }
 
+// Error logs a message at ERROR level
+func Error(format string, args ...interface{}) {
+	if currentLevel <= ERROR {
+		log(ERROR, format, args...)
+	}
+}
+
 // Logger represents a logger instance
 type Logger struct{}
 
@@ -115,10 +122,17 @@ func (l *Logger) Warning(format string, args ...interface{}) {
 	}
 }
 
+// Warningf logs a message at WARNING level with formatting
+func (l *Logger) Warningf(format string, args ...interface{}) {
+	if currentLevel <= WARNING {
+		log(WARNING, format, args...)
+	}
+}
+
 // Error logs a message at ERROR level
-func (l *Logger) Error(err error) {
+func (l *Logger) Error(format string, args ...interface{}) {
 	if currentLevel <= ERROR {
-		log(ERROR, "%v", err)
+		log(ERROR, format, args...)
 	}
 }
 

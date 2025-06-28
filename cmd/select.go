@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -45,7 +46,7 @@ For example:
 		// Get absolute path
 		absDir, err := filepath.Abs(dir)
 		if err != nil {
-			log.Error(err)
+			log.Error("%v", err)
 			os.Exit(1)
 		}
 
@@ -55,7 +56,7 @@ For example:
 		detector := scan.NewDetector()
 		services, err := detector.ScanDirectory(absDir)
 		if err != nil {
-			log.Error(err)
+			log.Error("%v", err)
 			os.Exit(1)
 		}
 
@@ -72,7 +73,9 @@ For example:
 		// Ask user to select services
 		fmt.Println(t.Tr("\nSelect services to include (comma-separated numbers, 'all' for all services):"))
 		var input string
-		fmt.Scanln(&input)
+		if _, err := fmt.Scanln(&input); err != nil && err != io.EOF {
+			log.Warningf(t.Tr("Error reading input: %s"), err)
+		}
 
 		selectedServices := []scan.Service{}
 		if input == "all" {
@@ -215,13 +218,13 @@ For example:
 			// Change directory to the scanned directory
 			originalDir, err := os.Getwd()
 			if err != nil {
-				log.Error(err)
+				log.Error("%v", err)
 				os.Exit(1)
 			}
 
 			err = os.Chdir(absDir)
 			if err != nil {
-				log.Error(err)
+				log.Error("%v", err)
 				os.Exit(1)
 			}
 
@@ -233,7 +236,9 @@ For example:
 			upCmd.Run(cmd, []string{"-f", configFile})
 
 			// Return to original directory
-			os.Chdir(originalDir)
+			if err := os.Chdir(originalDir); err != nil {
+				log.Errorf(t.Tr("Failed to change back to original directory: %s"), err)
+			}
 		}
 	},
 }

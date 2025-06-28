@@ -109,6 +109,7 @@ var scanCmd = &cobra.Command{
 // findMicroservices recursively scans directories up to maxDepth looking for potential microservices
 func findMicroservices(rootPath string, maxDepth int) ([]MicroserviceInfo, error) {
 	var result []MicroserviceInfo
+	log := logger.GetLogger()
 
 	err := filepath.Walk(rootPath, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
@@ -153,12 +154,17 @@ func findMicroservices(rootPath string, maxDepth int) ([]MicroserviceInfo, error
 				// Change to the directory temporarily to use the framework detector
 				currentDir, err := os.Getwd()
 				if err == nil {
-					os.Chdir(path)
-					defer os.Chdir(currentDir)
+					if err := os.Chdir(path); err == nil {
+						defer func() {
+							if err := os.Chdir(currentDir); err != nil {
+								log.Errorf("Failed to change back to original directory: %s", err)
+							}
+						}()
 
-					framework, err := scan.DetectFramework()
-					if err == nil && framework != "" {
-						ms.Framework = framework
+						framework, err := scan.DetectFramework()
+						if err == nil && framework != "" {
+							ms.Framework = framework
+						}
 					}
 				}
 			}
