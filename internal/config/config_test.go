@@ -6,16 +6,16 @@ import (
 	"testing"
 )
 
-// TestLoadManifest teste le chargement du manifeste
+// TestLoadManifest tests manifest loading
 func TestLoadManifest(t *testing.T) {
-	// Création d'un répertoire temporaire pour les tests
+	// Create a temporary directory for tests
 	tempDir, err := os.MkdirTemp("", "turbotilt-config-test-*")
 	if err != nil {
-		t.Fatalf("Impossible de créer le répertoire temporaire: %v", err)
+		t.Fatalf("Failed to create temporary directory: %v", err)
 	}
 	defer os.RemoveAll(tempDir)
 
-	// Test 1: Chargement d'un manifeste valide
+	// Test 1: Loading a valid manifest
 	t.Run("Valid Manifest", func(t *testing.T) {
 		manifestContent := `services:
   - name: api
@@ -35,171 +35,163 @@ func TestLoadManifest(t *testing.T) {
 `
 		manifestPath := filepath.Join(tempDir, "turbotilt.yaml")
 		if err := os.WriteFile(manifestPath, []byte(manifestContent), 0644); err != nil {
-			t.Fatalf("Erreur lors de la création du fichier turbotilt.yaml: %v", err)
+			t.Fatalf("Error creating turbotilt.yaml file: %v", err)
 		}
 
-		// Le test original utilise LoadManifest, mais nous ne savons pas si cette fonction
-		// valide le schéma ou non. Si le manifeste doit être valide selon certaines règles,
-		// nous pouvons modifier le test ou le manifeste pour qu'il corresponde aux règles.
-
-		// Essayons de charger le manifeste, mais ne considérons pas une erreur comme fatale
-		// pour ce test.
+		// Try to load the manifest
 		manifest, err := LoadManifest(manifestPath)
 		if err != nil {
-			t.Logf("Note: Erreur lors du chargement du manifeste: %v", err)
-			// Nous ne faisons pas échouer le test ici, car nous ne connaissons pas les règles exactes
+			t.Logf("Note: Error loading manifest: %v", err)
 			return
 		}
 
-		// Vérifions le contenu du manifeste seulement si le chargement a réussi
+		// Check manifest content only if loading succeeded
 		if len(manifest.Services) != 2 {
-			t.Errorf("Nombre de services incorrect. Attendu: %d, Obtenu: %d", 2, len(manifest.Services))
+			t.Errorf("Incorrect number of services. Expected: %d, Got: %d", 2, len(manifest.Services))
 		}
 
-		// Vérifier les détails du premier service
+		// Check first service details
 		firstService := manifest.Services[0]
 		if firstService.Name != "api" || firstService.Runtime != "spring" || firstService.Port != "8080" {
-			t.Errorf("Le premier service n'a pas les caractéristiques attendues: %+v", firstService)
+			t.Errorf("First service doesn't have expected characteristics: %+v", firstService)
 		}
 
-		// Vérifier les détails du second service
+		// Check second service details
 		secondService := manifest.Services[1]
 		if secondService.Name != "database" || secondService.Type != "postgresql" || secondService.Port != "5432" {
-			t.Errorf("Le second service n'a pas les caractéristiques attendues: %+v", secondService)
+			t.Errorf("Second service doesn't have expected characteristics: %+v", secondService)
 		}
 	})
 
-	// Test 2: Chargement d'un manifeste invalide (YAML mal formaté)
+	// Test 2: Loading an invalid manifest (badly formatted YAML)
 	t.Run("Invalid YAML", func(t *testing.T) {
 		invalidContent := `services:
   - name: api
     path: ./api
     runtime: spring
-  port: 8080 # Ce YAML est mal formaté (indentation incorrecte)
+  port: 8080 # This YAML is malformatted (incorrect indentation)
 `
 		manifestPath := filepath.Join(tempDir, "invalid.yaml")
 		if err := os.WriteFile(manifestPath, []byte(invalidContent), 0644); err != nil {
-			t.Fatalf("Erreur lors de la création du fichier invalid.yaml: %v", err)
+			t.Fatalf("Error creating invalid.yaml file: %v", err)
 		}
 
-		// Tenter de charger le manifeste invalide
+		// Try to load the invalid manifest
 		_, err := LoadManifest(manifestPath)
 		if err == nil {
-			t.Errorf("Un manifeste invalide a été chargé sans erreur")
+			t.Errorf("An invalid manifest was loaded without error")
 		}
 	})
 
-	// Test 3: Fichier inexistant
+	// Test 3: Non-existent file
 	t.Run("Non-Existent File", func(t *testing.T) {
 		nonExistentPath := filepath.Join(tempDir, "nonexistent.yaml")
 
-		// Tenter de charger un fichier inexistant
+		// Try to load a non-existent file
 		_, err := LoadManifest(nonExistentPath)
 		if err == nil {
-			t.Errorf("Un fichier inexistant a été chargé sans erreur")
+			t.Errorf("A non-existent file was loaded without error")
 		}
 	})
 }
 
-// TestFindConfiguration teste la recherche de fichiers de configuration
+// TestFindConfiguration tests the search for configuration files
 func TestFindConfiguration(t *testing.T) {
-	// Création d'un répertoire temporaire pour les tests
+	// Create a temporary directory for tests
 	tempDir, err := os.MkdirTemp("", "turbotilt-find-config-*")
 	if err != nil {
-		t.Fatalf("Impossible de créer le répertoire temporaire: %v", err)
+		t.Fatalf("Failed to create temporary directory: %v", err)
 	}
 	defer os.RemoveAll(tempDir)
 
-	// Sauvegarde du répertoire de travail actuel
+	// Save current working directory
 	originalDir, err := os.Getwd()
 	if err != nil {
-		t.Fatalf("Impossible d'obtenir le répertoire courant: %v", err)
+		t.Fatalf("Failed to get current directory: %v", err)
 	}
 
-	// Test 1: Aucun fichier de configuration
+	// Test 1: No configuration file
 	t.Run("No Configuration", func(t *testing.T) {
-		// Changer au répertoire temporaire vide
+		// Change to empty temporary directory
 		if err := os.Chdir(tempDir); err != nil {
-			t.Fatalf("Impossible de changer de répertoire: %v", err)
+			t.Fatalf("Failed to change directory: %v", err)
 		}
-		defer os.Chdir(originalDir) // Restaurer le répertoire à la fin du test
+		defer os.Chdir(originalDir) // Restore directory at the end of test
 
-		// Trouver la configuration
+		// Find configuration
 		path, isManifest, err := FindConfiguration()
-		// L'erreur est attendue dans ce test
+		// Error is expected in this test
 		if err == nil {
 			if path != "" || isManifest {
-				t.Errorf("Une configuration a été trouvée alors qu'il ne devrait pas y en avoir: path=%s, isManifest=%v", path, isManifest)
+				t.Errorf("A configuration was found when there shouldn't be one: path=%s, isManifest=%v", path, isManifest)
 			}
 		}
 	})
 
-	// Test 2: Présence du fichier turbotilt.yaml
+	// Test 2: With turbotilt.yaml file
 	t.Run("With turbotilt.yaml", func(t *testing.T) {
-		// Créer un sous-répertoire pour ce test
+		// Create a subdirectory for this test
 		yamlDir := filepath.Join(tempDir, "yaml-test")
 		if err := os.Mkdir(yamlDir, 0755); err != nil {
-			t.Fatalf("Impossible de créer le répertoire de test: %v", err)
+			t.Fatalf("Failed to create test directory: %v", err)
 		}
 
-		// Créer un fichier turbotilt.yaml
+		// Create a turbotilt.yaml file
 		yamlPath := filepath.Join(yamlDir, ManifestFileName)
 		if err := os.WriteFile(yamlPath, []byte("services: []"), 0644); err != nil {
-			t.Fatalf("Erreur lors de la création du fichier %s: %v", ManifestFileName, err)
+			t.Fatalf("Error creating %s file: %v", ManifestFileName, err)
 		}
 
-		// Changer au répertoire de test
+		// Change to test directory
 		if err := os.Chdir(yamlDir); err != nil {
-			t.Fatalf("Impossible de changer de répertoire: %v", err)
+			t.Fatalf("Failed to change directory: %v", err)
 		}
 		defer os.Chdir(originalDir)
 
-		// Trouver la configuration
+		// Find configuration
 		configPath, isManifest, err := FindConfiguration()
 		if err != nil {
-			t.Errorf("Erreur lors de la recherche de configuration: %v", err)
+			t.Errorf("Error finding configuration: %v", err)
 		}
 		if !isManifest || configPath == "" {
-			t.Errorf("Le manifeste n'a pas été trouvé correctement: path=%s, isManifest=%v", configPath, isManifest)
+			t.Errorf("Manifest was not found correctly: path=%s, isManifest=%v", configPath, isManifest)
 		}
 	})
 
-	// Test 3: Présence du fichier turbotilt.yml (ancien format)
+	// Test 3: With turbotilt.yml file (legacy format)
 	t.Run("With turbotilt.yml", func(t *testing.T) {
-		// Créer un sous-répertoire pour ce test
+		// Create a subdirectory for this test
 		ymlDir := filepath.Join(tempDir, "yml-test")
 		if err := os.Mkdir(ymlDir, 0755); err != nil {
-			t.Fatalf("Impossible de créer le répertoire de test: %v", err)
+			t.Fatalf("Failed to create test directory: %v", err)
 		}
 
-		// Créer un fichier turbotilt.yml (ancien format)
+		// Create a turbotilt.yml file (legacy format)
 		ymlPath := filepath.Join(ymlDir, LegacyConfigFileName)
 		if err := os.WriteFile(ymlPath, []byte("project:\n  name: test"), 0644); err != nil {
-			t.Fatalf("Erreur lors de la création du fichier %s: %v", LegacyConfigFileName, err)
+			t.Fatalf("Error creating %s file: %v", LegacyConfigFileName, err)
 		}
 
-		// Changer au répertoire de test
+		// Change to test directory
 		if err := os.Chdir(ymlDir); err != nil {
-			t.Fatalf("Impossible de changer de répertoire: %v", err)
+			t.Fatalf("Failed to change directory: %v", err)
 		}
 		defer os.Chdir(originalDir)
 
-		// Trouver la configuration
+		// Find configuration
 		configPath, _, err := FindConfiguration()
 		if err != nil {
-			t.Errorf("Erreur lors de la recherche de configuration: %v", err)
+			t.Errorf("Error finding configuration: %v", err)
 		}
-		// Ce test dépend de comment FindConfiguration traite l'ancien format.
 		if configPath == "" {
-			t.Errorf("Aucun chemin de configuration trouvé")
+			t.Errorf("No configuration path found")
 		}
-		// Si votre implémentation considère l'ancien format comme un manifeste, ajustez ce test.
 	})
 }
 
-// TestConvertManifestToRenderOptions teste la conversion du manifeste en options de rendu
+// TestConvertManifestToRenderOptions tests converting manifest to render options
 func TestConvertManifestToRenderOptions(t *testing.T) {
-	// Test 1: Service applicatif (avec runtime)
+	// Test 1: Application service (with runtime)
 	t.Run("Application Service", func(t *testing.T) {
 		service := ManifestService{
 			Name:    "api",
@@ -212,15 +204,15 @@ func TestConvertManifestToRenderOptions(t *testing.T) {
 
 		options, err := ConvertManifestToRenderOptions(service)
 		if err != nil {
-			t.Errorf("Erreur lors de la conversion: %v", err)
+			t.Errorf("Error during conversion: %v", err)
 		}
 
 		if options.ServiceName != service.Name || options.Framework != service.Runtime || options.Port != service.Port {
-			t.Errorf("Options de rendu incorrectes: %+v", options)
+			t.Errorf("Incorrect render options: %+v", options)
 		}
 	})
 
-	// Test 2: Service dépendant (sans runtime)
+	// Test 2: Dependent service (without runtime)
 	t.Run("Dependent Service", func(t *testing.T) {
 		service := ManifestService{
 			Name:    "postgres",
@@ -234,38 +226,34 @@ func TestConvertManifestToRenderOptions(t *testing.T) {
 			},
 		}
 
-		// Pour un service sans runtime, on s'attend à une erreur
+		// For a service without runtime, we expect an error
 		_, err := ConvertManifestToRenderOptions(service)
 		if err == nil {
-			t.Errorf("Un service dépendant sans runtime a été converti sans erreur")
+			t.Errorf("A dependent service without runtime was converted without error")
 		}
-
-		// Pas besoin de vérifier les options car nous attendons une erreur
 	})
 
-	// Test 3: Service invalide (sans nom)
+	// Test 3: Invalid service (without name)
 	t.Run("Invalid Service", func(t *testing.T) {
 		service := ManifestService{
-			// Pas de nom défini
+			// No name defined
 			Runtime: "spring",
 			Java:    "17",
 			Path:    "./api",
 		}
 
-		// La fonction devrait vérifier si le nom est vide
-		// mais elle ne le fait peut-être pas dans l'implémentation actuelle,
-		// donc ne faisons pas échouer le test pour cela.
+		// Just test without failing
 		_, _ = ConvertManifestToRenderOptions(service)
 
-		// Nous allons plutôt tester un autre cas d'erreur que nous savons devoir échouer
+		// Test another case that should fail
 		invalidService := ManifestService{
 			Name: "invalid",
-			// Pas de runtime défini
+			// No runtime defined
 		}
 
 		_, err := ConvertManifestToRenderOptions(invalidService)
 		if err == nil {
-			t.Errorf("Un service sans runtime a été converti sans erreur")
+			t.Errorf("A service without runtime was converted without error")
 		}
 	})
 }

@@ -9,21 +9,21 @@ import (
 )
 
 func TestGenerateComposeWithServices(t *testing.T) {
-	// Créer un répertoire temporaire pour le test
+	// Create a temporary directory for the test
 	tempDir := t.TempDir()
 
-	// Changer le répertoire de travail
+	// Change the working directory
 	oldWd, err := os.Getwd()
 	if err != nil {
-		t.Fatalf("Impossible d'obtenir le répertoire de travail actuel: %v", err)
+		t.Fatalf("Unable to get current working directory: %v", err)
 	}
 	defer os.Chdir(oldWd)
 
 	if err := os.Chdir(tempDir); err != nil {
-		t.Fatalf("Impossible de changer de répertoire: %v", err)
+		t.Fatalf("Unable to change directory: %v", err)
 	}
 
-	// Options pour la génération
+	// Options for generation
 	opts := Options{
 		Framework:   "spring",
 		ServiceName: "api",
@@ -42,59 +42,59 @@ func TestGenerateComposeWithServices(t *testing.T) {
 		},
 	}
 
-	// Générer le docker-compose.yml
+	// Generate docker-compose.yml
 	err = GenerateComposeWithServices(opts)
 	if err != nil {
-		t.Fatalf("GenerateComposeWithServices a retourné une erreur: %v", err)
+		t.Fatalf("GenerateComposeWithServices returned an error: %v", err)
 	}
 
-	// Vérifier que le fichier a été créé
+	// Verify the file was created
 	composePath := filepath.Join(tempDir, "docker-compose.yml")
 	if _, err := os.Stat(composePath); err != nil {
-		t.Fatalf("Le docker-compose.yml n'a pas été créé: %v", err)
+		t.Fatalf("docker-compose.yml was not created: %v", err)
 	}
 
-	// Lire le contenu du fichier généré
+	// Read the content of the generated file
 	content, err := os.ReadFile(composePath)
 	if err != nil {
-		t.Fatalf("Impossible de lire le docker-compose.yml généré: %v", err)
+		t.Fatalf("Unable to read the generated docker-compose.yml: %v", err)
 	}
 
-	// Vérifier que le contenu est correct
+	// Verify the content is correct
 	strContent := string(content)
 
-	// Vérifier la présence du service principal
+	// Verify the main service is present
 	if !strings.Contains(strContent, "api:") {
-		t.Error("Le docker-compose.yml généré ne contient pas le service 'api'")
+		t.Error("The generated docker-compose.yml does not contain the 'api' service")
 	}
 
-	// Vérifier le port
+	// Verify the port
 	if !strings.Contains(strContent, "8080:8080") {
-		t.Error("Le docker-compose.yml généré ne contient pas le mapping de port '8080:8080'")
+		t.Error("The generated docker-compose.yml does not contain the port mapping '8080:8080'")
 	}
 
-	// Vérifier la présence du service MySQL
+	// Verify the MySQL service is present
 	if !strings.Contains(strContent, "mysql:") {
-		t.Error("Le docker-compose.yml généré ne contient pas le service 'mysql'")
+		t.Error("The generated docker-compose.yml does not contain the 'mysql' service")
 	}
 }
 
 func TestGenerateComposeMultiService(t *testing.T) {
-	// Créer un répertoire temporaire pour le test
+	// Create a temporary directory for the test
 	tempDir := t.TempDir()
 
-	// Changer le répertoire de travail
+	// Change the working directory
 	oldWd, err := os.Getwd()
 	if err != nil {
-		t.Fatalf("Impossible d'obtenir le répertoire de travail actuel: %v", err)
+		t.Fatalf("Unable to get current working directory: %v", err)
 	}
 	defer os.Chdir(oldWd)
 
 	if err := os.Chdir(tempDir); err != nil {
-		t.Fatalf("Impossible de changer de répertoire: %v", err)
+		t.Fatalf("Unable to change directory: %v", err)
 	}
 
-	// Créer une liste de services
+	// Create a list of services
 	serviceList := ServiceList{
 		Services: []Options{
 			{
@@ -114,47 +114,47 @@ func TestGenerateComposeMultiService(t *testing.T) {
 		},
 	}
 
-	// Service base de données PostgreSQL
+	// PostgreSQL database service
 	pgService := scan.ServiceConfig{
 		Type:    scan.PostgreSQL,
 		Version: "14",
 		Port:    "5432",
 	}
 
-	// Ajouter le service de base de données à la configuration
+	// Add database service to the configuration
 	serviceList.Services[0].Services = []scan.ServiceConfig{pgService}
 
-	// Générer le docker-compose.yml pour les services multiples
+	// Generate docker-compose.yml for multiple services
 	err = GenerateComposeMultiService(serviceList)
 	if err != nil {
-		t.Fatalf("GenerateComposeMultiService a retourné une erreur: %v", err)
+		t.Fatalf("GenerateComposeMultiService returned an error: %v", err)
 	}
 
-	// Vérifier que le fichier a été créé
+	// Verify the file was created
 	composePath := filepath.Join(tempDir, "docker-compose.yml")
 	if _, err := os.Stat(composePath); err != nil {
-		t.Fatalf("Le docker-compose.yml n'a pas été créé: %v", err)
+		t.Fatalf("docker-compose.yml was not created: %v", err)
 	}
 
-	// Lire le contenu du fichier généré
+	// Read the content of the generated file
 	content, err := os.ReadFile(composePath)
 	if err != nil {
-		t.Fatalf("Impossible de lire le docker-compose.yml généré: %v", err)
+		t.Fatalf("Unable to read the generated docker-compose.yml: %v", err)
 	}
 
-	// Vérifier que le contenu est correct
+	// Verify the content is correct
 	strContent := string(content)
 
-	// Vérifier la présence des services
+	// Verify the services are present
 	if !strings.Contains(strContent, "service1:") {
-		t.Error("Le docker-compose.yml généré ne contient pas le service 'service1'")
+		t.Error("The generated docker-compose.yml does not contain the 'service1' service")
 	}
 
 	if !strings.Contains(strContent, "service2:") {
-		t.Error("Le docker-compose.yml généré ne contient pas le service 'service2'")
+		t.Error("The generated docker-compose.yml does not contain the 'service2' service")
 	}
 
 	if !strings.Contains(strContent, "postgres:") {
-		t.Error("Le docker-compose.yml généré ne contient pas le service 'postgres'")
+		t.Error("The generated docker-compose.yml does not contain the 'postgres' service")
 	}
 }

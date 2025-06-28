@@ -14,7 +14,7 @@ import (
 )
 
 var (
-	// Options pour la commande init
+	// Options for the init command
 	forceFramework   string
 	port             string
 	jdkVersion       string
@@ -26,118 +26,118 @@ var (
 
 var initCmd = &cobra.Command{
 	Use:   "init",
-	Short: "Scan et génère Tiltfile & Compose",
+	Short: "Scan and generate Tiltfile & Compose",
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("🔍 Initialisation de Turbotilt...")
+		fmt.Println("🔍 Initializing Turbotilt...")
 
-		// Rechercher un manifeste existant
+		// Look for an existing manifest
 		configPath, isManifest, _ := config.FindConfiguration()
 
-		// Si --from-manifest est demandé ou si un manifeste existe et --generate-manifest n'est pas demandé
+		// If --from-manifest is requested or if a manifest exists and --generate-manifest is not requested
 		if fromManifest || (isManifest && !generateManifest) {
 			if configPath == "" {
-				fmt.Println("❌ Aucun manifeste trouvé. Utilisez --generate-manifest pour en créer un.")
+				fmt.Println("❌ No manifest found. Use --generate-manifest to create one.")
 				return
 			}
 
-			fmt.Printf("📄 Utilisation du manifeste %s\n", configPath)
+			fmt.Printf("📄 Using manifest %s\n", configPath)
 			manifest, err := config.LoadManifest(configPath)
 			if err != nil {
-				fmt.Printf("❌ Erreur lors du chargement du manifeste: %v\n", err)
+				fmt.Printf("❌ Error loading manifest: %v\n", err)
 				return
 			}
 
-			fmt.Printf("✅ Manifeste chargé avec %d service(s)\n", len(manifest.Services))
+			fmt.Printf("✅ Manifest loaded with %d service(s)\n", len(manifest.Services))
 
-			// Convertir les services du manifeste en options de rendu
+			// Convert manifest services to render options
 			serviceList := render.ServiceList{
 				Services: []render.Options{},
 			}
 
 			for _, service := range manifest.Services {
-				// Ignorer les services dépendants (sans runtime)
+				// Ignore dependent services (without runtime)
 				if service.Runtime == "" {
 					continue
 				}
 
 				opts, err := config.ConvertManifestToRenderOptions(service)
 				if err != nil {
-					fmt.Printf("⚠️ Avertissement: %v\n", err)
+					fmt.Printf("⚠️ Warning: %v\n", err)
 					continue
 				}
 
 				serviceList.Services = append(serviceList.Services, *opts)
 			}
 
-			// Générer les fichiers pour un projet multi-services
+			// Generate files for a multi-service project
 			if len(serviceList.Services) > 0 {
-				fmt.Println("🔧 Génération des configurations pour un projet multi-services...")
+				fmt.Println("🔧 Generating configurations for a multi-service project...")
 
 				if err := render.GenerateMultiServiceCompose(serviceList); err != nil {
-					fmt.Printf("❌ Erreur lors de la génération du docker-compose.yml: %v\n", err)
+					fmt.Printf("❌ Error generating docker-compose.yml: %v\n", err)
 					return
 				}
 
 				if err := render.GenerateMultiServiceTiltfile(serviceList); err != nil {
-					fmt.Printf("❌ Erreur lors de la génération du Tiltfile: %v\n", err)
+					fmt.Printf("❌ Error generating Tiltfile: %v\n", err)
 					return
 				}
 
-				fmt.Println("✨ Configuration Turbotilt terminée!")
-				fmt.Println("📋 Fichiers générés à partir du manifeste:")
+				fmt.Println("✨ Turbotilt configuration completed!")
+				fmt.Println("📋 Files generated from manifest:")
 				fmt.Println("   - docker-compose.yml")
 				fmt.Println("   - Tiltfile")
-				fmt.Println("\n▶️ Pour lancer l'environnement: turbotilt up")
+				fmt.Println("\n▶️ To start the environment: turbotilt up")
 				return
 			}
 		}
 
-		// Si on arrive ici, on procède avec l'auto-détection ou les options CLI
+		// If we get here, proceed with auto-detection or CLI options
 
-		// Détecter le framework ou utiliser celui spécifié
+		// Detect framework or use the specified one
 		framework := forceFramework
 		var err error
 
 		if framework == "" {
 			framework, err = scan.DetectFramework()
 			if err != nil {
-				fmt.Printf("❌ Erreur lors de la détection du framework: %v\n", err)
+				fmt.Printf("❌ Error detecting framework: %v\n", err)
 				return
 			}
 		}
 
-		fmt.Printf("✅ Framework détecté/sélectionné: %s\n", framework)
+		fmt.Printf("✅ Framework detected/selected: %s\n", framework)
 
-		// Détecter les services si demandé
+		// Detect services if requested
 		var services []scan.ServiceConfig
 		if detectServices {
-			fmt.Println("🔍 Détection des services dépendants...")
+			fmt.Println("🔍 Detecting dependent services...")
 			services, err = scan.DetectServices()
 			if err != nil {
-				fmt.Printf("⚠️ Avertissement lors de la détection des services: %v\n", err)
+				fmt.Printf("⚠️ Warning during service detection: %v\n", err)
 			}
 
-			// Afficher les services détectés
+			// Display detected services
 			if len(services) > 0 {
-				fmt.Println("✅ Services détectés:")
+				fmt.Println("✅ Detected services:")
 				for _, service := range services {
 					fmt.Printf("   - %s\n", service.Type)
 				}
 			} else {
-				fmt.Println("ℹ️ Aucun service dépendant détecté")
+				fmt.Println("ℹ️ No dependent services detected")
 			}
 		}
 
-		// Déterminer le nom de l'application (dossier courant par défaut)
+		// Determine application name (current folder by default)
 		appName := "app"
 		cwd, err := os.Getwd()
 		if err == nil {
 			appName = filepath.Base(cwd)
 		}
 
-		// Préparer les options de rendu
+		// Prepare render options
 		renderOpts := render.Options{
-			ServiceName: appName, // Utiliser le nom pour l'identifier dans un contexte multi-services
+			ServiceName: appName, // Use the name to identify it in a multi-service context
 			Framework:   framework,
 			AppName:     appName,
 			Port:        port,
@@ -147,15 +147,15 @@ var initCmd = &cobra.Command{
 			Services:    services,
 		}
 
-		// Générer le manifest si demandé
+		// Generate manifest if requested
 		if generateManifest {
-			fmt.Println("📝 Génération du manifeste turbotilt.yaml...")
+			fmt.Println("📝 Generating turbotilt.yaml manifest...")
 
-			// Créer une configuration basée sur les résultats de la détection
+			// Create a configuration based on detection results
 			cfg := config.Config{
 				Project: config.ProjectConfig{
 					Name:        appName,
-					Description: "Projet Turbotilt",
+					Description: "Turbotilt Project",
 					Version:     "1.0.0",
 				},
 				Framework: config.FrameworkConfig{
@@ -171,9 +171,9 @@ var initCmd = &cobra.Command{
 				Services: []config.ServiceConfig{},
 			}
 
-			// Convertir les services scan.ServiceConfig en config.ServiceConfig
+			// Convert scan.ServiceConfig to config.ServiceConfig
 			for _, svc := range services {
-				// Générer un nom basé sur le type
+				// Generate a name based on type
 				serviceName := strings.ToLower(string(svc.Type))
 
 				configSvc := config.ServiceConfig{
@@ -186,62 +186,62 @@ var initCmd = &cobra.Command{
 				cfg.Services = append(cfg.Services, configSvc)
 			}
 
-			// Générer le manifeste à partir de la configuration
+			// Generate manifest from configuration
 			manifest := config.GenerateManifestFromConfig(cfg)
 
-			// Enregistrer le manifeste
+			// Save manifest
 			if err := config.SaveManifest(manifest, config.ManifestFileName); err != nil {
-				fmt.Printf("❌ Erreur lors de l'enregistrement du manifeste: %v\n", err)
+				fmt.Printf("❌ Error saving manifest: %v\n", err)
 			} else {
-				fmt.Printf("✅ Manifeste %s généré avec succès!\n", config.ManifestFileName)
+				fmt.Printf("✅ Manifest %s generated successfully!\n", config.ManifestFileName)
 			}
 		}
 
-		// Générer les fichiers
+		// Generate files
 		if err := render.GenerateDockerfile(renderOpts); err != nil {
-			fmt.Printf("❌ Erreur lors de la génération du Dockerfile: %v\n", err)
+			fmt.Printf("❌ Error generating Dockerfile: %v\n", err)
 			return
 		}
 
-		// Utiliser le nouveau générateur de docker-compose avec support des services
+		// Use the new docker-compose generator with service support
 		if len(services) > 0 {
 			if err := render.GenerateComposeWithServices(renderOpts); err != nil {
-				fmt.Printf("❌ Erreur lors de la génération du docker-compose.yml: %v\n", err)
+				fmt.Printf("❌ Error generating docker-compose.yml: %v\n", err)
 				return
 			}
 		} else {
 			if err := render.GenerateCompose(renderOpts); err != nil {
-				fmt.Printf("❌ Erreur lors de la génération du docker-compose.yml: %v\n", err)
+				fmt.Printf("❌ Error generating docker-compose.yml: %v\n", err)
 				return
 			}
 		}
 
 		if err := render.GenerateTiltfile(renderOpts); err != nil {
-			fmt.Printf("❌ Erreur lors de la génération du Tiltfile: %v\n", err)
+			fmt.Printf("❌ Error generating Tiltfile: %v\n", err)
 			return
 		}
 
-		fmt.Println("✨ Configuration Turbotilt terminée!")
-		fmt.Println("📋 Fichiers générés:")
+		fmt.Println("✨ Turbotilt configuration completed!")
+		fmt.Println("📋 Generated files:")
 		fmt.Println("   - Dockerfile")
 		fmt.Println("   - docker-compose.yml")
 		fmt.Println("   - Tiltfile")
 		if generateManifest {
 			fmt.Printf("   - %s\n", config.ManifestFileName)
 		}
-		fmt.Println("\n▶️ Pour lancer l'environnement: turbotilt up")
+		fmt.Println("\n▶️ To start the environment: turbotilt up")
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(initCmd)
 
-	// Flags pour la commande init
-	initCmd.Flags().StringVarP(&forceFramework, "framework", "f", "", "Spécifier manuellement le framework (spring, quarkus, java)")
-	initCmd.Flags().StringVarP(&port, "port", "p", "8080", "Port à exposer pour l'application")
-	initCmd.Flags().StringVarP(&jdkVersion, "jdk", "j", "11", "Version du JDK à utiliser")
-	initCmd.Flags().BoolVarP(&devMode, "dev", "d", true, "Activer les configurations de développement")
-	initCmd.Flags().BoolVarP(&detectServices, "services", "s", true, "Détecter et configurer les services dépendants (MySQL, PostgreSQL, etc.)")
-	initCmd.Flags().BoolVarP(&generateManifest, "generate-manifest", "g", false, "Générer un manifeste turbotilt.yaml à partir de la détection")
-	initCmd.Flags().BoolVarP(&fromManifest, "from-manifest", "m", false, "Initialiser le projet à partir d'un manifeste existant")
+	// Flags for the init command
+	initCmd.Flags().StringVarP(&forceFramework, "framework", "f", "", "Manually specify the framework (spring, quarkus, java)")
+	initCmd.Flags().StringVarP(&port, "port", "p", "8080", "Port to expose for the application")
+	initCmd.Flags().StringVarP(&jdkVersion, "jdk", "j", "11", "JDK version to use")
+	initCmd.Flags().BoolVarP(&devMode, "dev", "d", true, "Enable development configurations")
+	initCmd.Flags().BoolVarP(&detectServices, "services", "s", true, "Detect and configure dependent services (MySQL, PostgreSQL, etc.)")
+	initCmd.Flags().BoolVarP(&generateManifest, "generate-manifest", "g", false, "Generate a turbotilt.yaml manifest from detection")
+	initCmd.Flags().BoolVarP(&fromManifest, "from-manifest", "m", false, "Initialize project from an existing manifest")
 }

@@ -14,15 +14,13 @@ import (
 
 var (
 	titleStyle = lipgloss.NewStyle().MarginLeft(2)
-	// Currently unused
-	// itemStyle         = lipgloss.NewStyle().PaddingLeft(4)
-	// selectedItemStyle = lipgloss.NewStyle().PaddingLeft(2).Foreground(lipgloss.Color("170"))
+	// Remove unused style declarations that are commented out
 	paginationStyle = list.DefaultStyles().PaginationStyle.PaddingLeft(4)
 	helpStyle       = list.DefaultStyles().HelpStyle.PaddingLeft(4).PaddingBottom(1)
 	quitTextStyle   = lipgloss.NewStyle().Margin(1, 0, 2, 4)
 )
 
-// item représente un élément de la liste interactive
+// item represents an interactive list element
 type item struct {
 	title, desc string
 }
@@ -31,7 +29,7 @@ func (i item) Title() string       { return i.title }
 func (i item) Description() string { return i.desc }
 func (i item) FilterValue() string { return i.title }
 
-// InteractiveConfig représente l'état de l'interface interactive
+// InteractiveConfig represents the state of the interactive interface
 type InteractiveConfig struct {
 	list         list.Model
 	textInput    textinput.Model
@@ -42,7 +40,7 @@ type InteractiveConfig struct {
 	quitting     bool
 }
 
-// InitModel initialise le modèle pour l'interface interactive
+// InitModel initializes the model for the interactive interface
 func InitModel() tea.Model {
 	items := []list.Item{
 		item{title: "🔄 Détecter le framework", desc: "Scanner le projet pour identifier le framework"},
@@ -80,12 +78,12 @@ func InitModel() tea.Model {
 	return m
 }
 
-// Init initialise le modèle
+// Init initializes the model
 func (m *InteractiveConfig) Init() tea.Cmd {
 	return nil
 }
 
-// Update met à jour le modèle avec les événements utilisateur
+// Update updates the model with user events
 func (m *InteractiveConfig) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
@@ -96,7 +94,7 @@ func (m *InteractiveConfig) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		case "enter":
 			if m.currentStep == 0 {
-				// Navigation dans la liste principale
+				// Main list navigation
 				i, ok := m.list.SelectedItem().(item)
 				if ok {
 					switch i.title {
@@ -135,7 +133,7 @@ func (m *InteractiveConfig) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					}
 				}
 			} else {
-				// Validation des entrées utilisateur
+				// User input validation
 				value := m.textInput.Value()
 				switch m.currentStep {
 				case 1:
@@ -143,7 +141,7 @@ func (m *InteractiveConfig) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.config.Framework.Type = value
 					m.stepComplete[0] = true
 				case 2:
-					// Projet
+					// Project
 					m.config.Project.Name = value
 					m.stepComplete[1] = true
 				case 3:
@@ -153,12 +151,12 @@ func (m *InteractiveConfig) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					}
 					m.stepComplete[2] = true
 				case 4:
-					// Dev
+					// Dev options
 					m.config.Development.EnableLiveReload = (value == "y" || value == "")
 					m.stepComplete[3] = true
 				case 5:
 					// Services
-					// TODO: Analyse des services requis
+					// Analyze required services and dependencies
 					m.stepComplete[4] = true
 				}
 				m.currentStep = 0
@@ -169,26 +167,26 @@ func (m *InteractiveConfig) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.QuitMsg:
 		m.quitting = true
 		return m, nil
-	// Gérer les mises à jour des widgets
+	// Handle widget updates
 	case tea.WindowSizeMsg:
 		h, v := lipgloss.NewStyle().Margin(1, 2).GetFrameSize()
 		m.list.SetSize(msg.Width-h, msg.Height-v)
 	}
 
 	if m.currentStep == 0 {
-		// Mode liste
+		// List mode
 		var cmd tea.Cmd
 		m.list, cmd = m.list.Update(msg)
 		return m, cmd
 	} else {
-		// Mode saisie texte
+		// Text input mode
 		var cmd tea.Cmd
 		m.textInput, cmd = m.textInput.Update(msg)
 		return m, cmd
 	}
 }
 
-// generateFiles est un tea.Cmd qui génère les fichiers
+// generateFiles is a tea.Cmd that generates configuration files
 func generateFiles(m *InteractiveConfig) tea.Cmd {
 	return func() tea.Msg {
 		p := tea.NewProgram(generateFilesModel{config: m.config})
@@ -197,7 +195,7 @@ func generateFiles(m *InteractiveConfig) tea.Cmd {
 	}
 }
 
-// startEnvironment est un tea.Cmd qui démarre l'environnement
+// startEnvironment is a tea.Cmd that starts the development environment
 func startEnvironment(m *InteractiveConfig) tea.Cmd {
 	return func() tea.Msg {
 		p := tea.NewProgram(startEnvironmentModel{})
@@ -206,7 +204,7 @@ func startEnvironment(m *InteractiveConfig) tea.Cmd {
 	}
 }
 
-// generateFilesModel est un modèle pour la génération des fichiers
+// generateFilesModel is a model for file generation
 type generateFilesModel struct {
 	config config.Config
 }
@@ -229,12 +227,12 @@ func (m generateFilesModel) View() string {
 	return "Génération des fichiers..."
 }
 
-// generateFilesFinishedMsg est un message signalant la fin de la génération des fichiers
+// generateFilesFinishedMsg is a message indicating file generation completion
 type generateFilesFinishedMsg struct {
 	err error
 }
 
-// startEnvironmentModel est un modèle pour le démarrage de l'environnement
+// startEnvironmentModel is a model for environment startup
 type startEnvironmentModel struct{}
 
 func (m startEnvironmentModel) Init() tea.Cmd {
@@ -255,18 +253,18 @@ func (m startEnvironmentModel) View() string {
 	return "Démarrage de l'environnement..."
 }
 
-// startEnvironmentFinishedMsg est un message signalant la fin du démarrage
+// startEnvironmentFinishedMsg is a message indicating environment startup completion
 type startEnvironmentFinishedMsg struct {
 	err error
 }
 
-// View renvoie la représentation textuelle du modèle
+// View returns the text representation of the model
 func (m *InteractiveConfig) View() string {
 	if m.quitting {
-		return quitTextStyle.Render("Merci d'avoir utilisé Turbotilt! Configuration générée pour " + m.config.Project.Name)
+		return quitTextStyle.Render("Thanks for using Turbotilt! Configuration generated for " + m.config.Project.Name)
 	}
 
-	// Afficher le contenu selon l'étape actuelle
+	// Display content based on current step
 	if m.currentStep == 0 {
 		return "\n" + m.list.View()
 	} else {
@@ -292,11 +290,11 @@ func (m *InteractiveConfig) View() string {
 	}
 }
 
-// Wizard lance l'assistant interactif
+// Wizard launches the interactive setup assistant
 func Wizard() {
 	p := tea.NewProgram(InitModel(), tea.WithAltScreen())
 	if _, err := p.Run(); err != nil {
-		fmt.Printf("Erreur lors de l'exécution de l'assistant: %v\n", err)
+		fmt.Printf("Error running the assistant: %v\n", err)
 		os.Exit(1)
 	}
 }

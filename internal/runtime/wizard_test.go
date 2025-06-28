@@ -8,110 +8,110 @@ import (
 )
 
 func TestItemInterface(t *testing.T) {
-	// Créer un item de test
+	// Create a test item
 	testItem := item{
 		title: "Test Title",
 		desc:  "Test Description",
 	}
 
-	// Tester la méthode Title
+	// Test the Title method
 	if title := testItem.Title(); title != "Test Title" {
-		t.Errorf("Title() devrait retourner 'Test Title', mais a retourné %s", title)
+		t.Errorf("Title() should return 'Test Title', but returned %s", title)
 	}
 
-	// Tester la méthode Description
+	// Test the Description method
 	if desc := testItem.Description(); desc != "Test Description" {
-		t.Errorf("Description() devrait retourner 'Test Description', mais a retourné %s", desc)
+		t.Errorf("Description() should return 'Test Description', but returned %s", desc)
 	}
 
-	// Tester la méthode FilterValue
+	// Test the FilterValue method
 	if filter := testItem.FilterValue(); filter != "Test Title" {
-		t.Errorf("FilterValue() devrait retourner 'Test Title', mais a retourné %s", filter)
+		t.Errorf("FilterValue() should return 'Test Title', but returned %s", filter)
 	}
 }
 
 func TestInitModel(t *testing.T) {
-	// Créer le modèle
+	// Create the model
 	model := InitModel()
 
-	// Vérifier que le modèle a été créé
+	// Verify that the model was created
 	if model == nil {
-		t.Fatal("InitModel() ne devrait pas retourner nil")
+		t.Fatal("InitModel() should not return nil")
 	}
 
-	// Vérifier que le modèle est du bon type
+	// Verify that the model is of the correct type
 	if _, ok := model.(*InteractiveConfig); !ok {
-		t.Errorf("InitModel() devrait retourner un *InteractiveConfig, mais a retourné %T", model)
+		t.Errorf("InitModel() should return a *InteractiveConfig, but returned %T", model)
 	}
 }
 
 func TestInteractiveConfigInitialState(t *testing.T) {
-	// Créer un modèle
+	// Create a model
 	model := InitModel()
 	ic, ok := model.(*InteractiveConfig)
 	if !ok {
-		t.Fatal("InitModel() devrait retourner un *InteractiveConfig")
+		t.Fatal("InitModel() should return a *InteractiveConfig")
 	}
 
-	// Vérifier l'état initial
+	// Verify the initial state
 	if ic.currentStep != 0 {
-		t.Errorf("currentStep devrait être 0, mais est %d", ic.currentStep)
+		t.Errorf("currentStep should be 0, but is %d", ic.currentStep)
 	}
 
 	if ic.quitting {
-		t.Error("quitting devrait être false initialement")
+		t.Error("quitting should be false initially")
 	}
 }
 
 func TestInteractiveConfigView(t *testing.T) {
-	// Créer un modèle
+	// Create a model
 	model := InitModel()
 	ic, ok := model.(*InteractiveConfig)
 	if !ok {
-		t.Fatal("InitModel() devrait retourner un *InteractiveConfig")
+		t.Fatal("InitModel() should return a *InteractiveConfig")
 	}
 
-	// Tester la méthode View
+	// Test the View method
 	view := ic.View()
 
-	// La vue ne devrait pas être vide
+	// The view should not be empty
 	if view == "" {
-		t.Error("View() ne devrait pas retourner une chaîne vide")
+		t.Error("View() should not return an empty string")
 	}
 
-	// Simuler une condition de sortie
+	// Simulate an exit condition
 	ic.quitting = true
 	view = ic.View()
 
-	// La vue devrait contenir un message de sortie
+	// The view should contain an exit message
 	if !strings.Contains(strings.ToLower(view), "config") {
-		t.Error("View() devrait contenir une référence à la configuration quand quitting=true")
+		t.Error("View() should contain a reference to the configuration when quitting=true")
 	}
 }
 
 func TestInteractiveConfigUpdate(t *testing.T) {
-	// Créer un modèle
+	// Create a model
 	model := InitModel()
 	ic, ok := model.(*InteractiveConfig)
 	if !ok {
-		t.Fatal("InitModel() devrait retourner un *InteractiveConfig")
+		t.Fatal("InitModel() should return a *InteractiveConfig")
 	}
 
-	// Tester la méthode Update avec différents messages
+	// Test the Update method with different messages
 
-	// Message de sortie
+	// Exit message
 	model, cmd := ic.Update(tea.QuitMsg{})
 	if cmd != nil {
-		t.Error("Update(QuitMsg) devrait retourner un cmd nil")
+		t.Error("Update(QuitMsg) should return a nil cmd")
 	}
 
-	// Vérifier que le modèle a été mis à jour
+	// Verify that the model was updated
 	updatedIc, ok := model.(*InteractiveConfig)
 	if !ok {
-		t.Fatal("Update() devrait retourner un *InteractiveConfig")
+		t.Fatal("Update() should return a *InteractiveConfig")
 	}
 
 	if !updatedIc.quitting {
-		t.Error("Update(QuitMsg) devrait définir quitting=true")
+		t.Error("Update(QuitMsg) should set quitting=true")
 	}
 }

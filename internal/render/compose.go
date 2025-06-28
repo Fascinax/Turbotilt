@@ -8,7 +8,7 @@ import (
 	"turbotilt/internal/scan"
 )
 
-// ComposeServiceDefinition définit un service dans docker-compose.yml
+// ComposeServiceDefinition defines a service in docker-compose.yml
 type ComposeServiceDefinition struct {
 	Name        string
 	Image       string
@@ -19,23 +19,23 @@ type ComposeServiceDefinition struct {
 	EnvFile     string
 }
 
-// GenerateComposeWithServices génère un docker-compose.yml incluant les services détectés
+// GenerateComposeWithServices generates a docker-compose.yml including detected services
 func GenerateComposeWithServices(opts Options) error {
-	// Utiliser les services de l'objet opts
+	// Use services from the opts object
 	services := opts.Services
 	f, err := os.Create("docker-compose.yml")
 	if err != nil {
-		return fmt.Errorf("erreur lors de la création du docker-compose.yml: %w", err)
+		return fmt.Errorf("error creating docker-compose.yml: %w", err)
 	}
 	defer f.Close()
 
-	// Déterminer le chemin du service
+	// Determine the service path
 	servicePath := "."
 	if opts.Path != "" && opts.Path != "." {
 		servicePath = opts.Path
 	}
 
-	// Service principal de l'application
+	// Main application service
 	appName := "app"
 	if opts.ServiceName != "" {
 		appName = opts.ServiceName
@@ -51,14 +51,14 @@ func GenerateComposeWithServices(opts Options) error {
 		Environment: make(map[string]string),
 	}
 
-	// Vérifier si un fichier d'environnement existe
+	// Check if an environment file exists
 	envFile := getEnvFilePath(servicePath)
 	if envFile != "" {
-		// Ajouter le fichier d'environnement au service
+		// Add the environment file to the service
 		appService.EnvFile = envFile
 	}
 
-	// Configurer l'environnement selon le framework
+	// Configure the environment according to the framework
 	switch opts.Framework {
 	case "spring":
 		if opts.DevMode {
@@ -80,11 +80,11 @@ func GenerateComposeWithServices(opts Options) error {
 		}
 	}
 
-	// Liste des services à inclure dans docker-compose.yml
+	// List of services to include in docker-compose.yml
 	serviceDefinitions := []ComposeServiceDefinition{appService}
 	volumes := make(map[string]bool)
 
-	// Ajouter les services détectés
+	// Add detected services
 	for _, service := range services {
 		var serviceDefinition ComposeServiceDefinition
 
@@ -148,7 +148,7 @@ func GenerateComposeWithServices(opts Options) error {
 				DependsOn: []string{"zookeeper"},
 			}
 
-			// Ajouter aussi Zookeeper
+			// Also add Zookeeper
 			zookeeper := ComposeServiceDefinition{
 				Name:  "zookeeper",
 				Image: "image: confluentinc/cp-zookeeper:latest",
@@ -192,14 +192,14 @@ func GenerateComposeWithServices(opts Options) error {
 		}
 	}
 
-	// Mise à jour de la définition de l'application pour ajouter les dépendances
+	// Update the application definition to add dependencies
 	serviceDefinitions[0] = appService
 
-	// Construire le contenu du fichier docker-compose.yml
+	// Build the docker-compose.yml file content
 	var sb strings.Builder
 	sb.WriteString("version: '3'\n\nservices:\n")
 
-	// Ajouter tous les services
+	// Add all services
 	for _, service := range serviceDefinitions {
 		sb.WriteString(fmt.Sprintf("  %s:\n", service.Name))
 		sb.WriteString(fmt.Sprintf("    %s\n", service.Image))
@@ -209,7 +209,7 @@ func GenerateComposeWithServices(opts Options) error {
 			sb.WriteString(fmt.Sprintf("      - '%s'\n", service.Port))
 		}
 
-		// Ajouter le fichier d'environnement si présent
+		// Add environment file if present
 		if service.EnvFile != "" {
 			sb.WriteString("    env_file:\n")
 			sb.WriteString(fmt.Sprintf("      - %s\n", service.EnvFile))
@@ -239,7 +239,7 @@ func GenerateComposeWithServices(opts Options) error {
 		sb.WriteString("\n")
 	}
 
-	// Ajouter les volumes si nécessaire
+	// Add volumes if needed
 	if len(volumes) > 0 {
 		sb.WriteString("volumes:\n")
 		for volume := range volumes {
@@ -247,12 +247,12 @@ func GenerateComposeWithServices(opts Options) error {
 		}
 	}
 
-	// Écrire le contenu dans le fichier
+	// Write the content to the file
 	_, err = f.WriteString(sb.String())
 	return err
 }
 
-// getOrDefault retourne la valeur ou une valeur par défaut si vide
+// getOrDefault returns the value or a default value if empty
 func getOrDefault(value, defaultValue string) string {
 	if value == "" {
 		return defaultValue
@@ -260,7 +260,7 @@ func getOrDefault(value, defaultValue string) string {
 	return value
 }
 
-// getFromCredentials récupère une valeur des credentials ou retourne la valeur par défaut
+// getFromCredentials retrieves a value from credentials or returns the default value
 func getFromCredentials(credentials map[string]string, key, defaultValue string) string {
 	if value, ok := credentials[key]; ok && value != "" {
 		return value
@@ -268,12 +268,12 @@ func getFromCredentials(credentials map[string]string, key, defaultValue string)
 	return defaultValue
 }
 
-// getEnvFilePath vérifie si un fichier d'environnement existe pour un service
+// getEnvFilePath checks if an environment file exists for a service
 func getEnvFilePath(servicePath string) string {
-	// Construire le chemin vers le fichier d'environnement
+	// Build the path to the environment file
 	envPath := filepath.Join(servicePath, "envs", "local.env")
 
-	// Vérifier si le fichier existe
+	// Check if the file exists
 	if _, err := os.Stat(envPath); err == nil {
 		return envPath
 	}
@@ -281,21 +281,21 @@ func getEnvFilePath(servicePath string) string {
 	return ""
 }
 
-// GenerateMultiServiceCompose génère un docker-compose.yml pour un projet multi-services déclaré dans le manifeste
+// GenerateMultiServiceCompose generates a docker-compose.yml for a multi-service project declared in the manifest
 func GenerateMultiServiceCompose(serviceList ServiceList) error {
 	f, err := os.Create("docker-compose.yml")
 	if err != nil {
-		return fmt.Errorf("erreur lors de la création du docker-compose.yml: %w", err)
+		return fmt.Errorf("error creating docker-compose.yml: %w", err)
 	}
 	defer f.Close()
 
-	// Construire le contenu du fichier docker-compose.yml
+	// Build the docker-compose.yml file content
 	var sb strings.Builder
 	sb.WriteString("version: '3'\n\nservices:\n")
 
-	// Ajouter tous les services applicatifs
+	// Add all application services
 	for _, opts := range serviceList.Services {
-		// Ignorer les services non-applicatifs (sans runtime)
+		// Ignore non-application services (without runtime)
 		if opts.Framework == "" {
 			continue
 		}
@@ -305,13 +305,13 @@ func GenerateMultiServiceCompose(serviceList ServiceList) error {
 			appName = "app"
 		}
 
-		// Déterminer le chemin du service
+		// Determine the service path
 		servicePath := "."
 		if opts.Path != "" {
 			servicePath = opts.Path
 		}
 
-		// Ajouter le service
+		// Add the service
 		sb.WriteString(fmt.Sprintf("  %s:\n", appName))
 		sb.WriteString(fmt.Sprintf("    build: %s\n", servicePath))
 		sb.WriteString("    ports:\n")
@@ -319,14 +319,14 @@ func GenerateMultiServiceCompose(serviceList ServiceList) error {
 		sb.WriteString("    volumes:\n")
 		sb.WriteString(fmt.Sprintf("      - '%s:/app'\n", servicePath))
 
-		// Vérifier si un fichier d'environnement existe
+		// Check if an environment file exists
 		envFile := getEnvFilePath(servicePath)
 		if envFile != "" {
 			sb.WriteString("    env_file:\n")
 			sb.WriteString(fmt.Sprintf("      - %s\n", envFile))
 		}
 
-		// Variables d'environnement selon le framework
+		// Environment variables according to the framework
 		sb.WriteString("    environment:\n")
 		switch opts.Framework {
 		case "spring":
@@ -354,12 +354,12 @@ func GenerateMultiServiceCompose(serviceList ServiceList) error {
 		sb.WriteString("\n")
 	}
 
-	// Ajouter les services dépendants (MySQL, Redis, etc.) détectés
+	// Add dependent services (MySQL, Redis, etc.) detected
 	volumes := make(map[string]bool)
 
-	// Parcourir chaque service pour ses dépendances
+	// Go through each service for its dependencies
 	for _, opts := range serviceList.Services {
-		// Traiter les services dépendants de ce service
+		// Process dependent services for this service
 		for _, service := range opts.Services {
 			var serviceDefinition ComposeServiceDefinition
 
@@ -411,7 +411,7 @@ func GenerateMultiServiceCompose(serviceList ServiceList) error {
 			}
 
 			if serviceDefinition.Name != "" {
-				// Ajouter le service au docker-compose
+				// Add the service to docker-compose
 				sb.WriteString(fmt.Sprintf("  %s:\n", serviceDefinition.Name))
 				sb.WriteString(fmt.Sprintf("    %s\n", serviceDefinition.Image))
 
@@ -439,7 +439,7 @@ func GenerateMultiServiceCompose(serviceList ServiceList) error {
 		}
 	}
 
-	// Ajouter les volumes si nécessaire
+	// Add volumes if needed
 	if len(volumes) > 0 {
 		sb.WriteString("volumes:\n")
 		for volume := range volumes {
@@ -447,13 +447,13 @@ func GenerateMultiServiceCompose(serviceList ServiceList) error {
 		}
 	}
 
-	// Écrire le contenu dans le fichier
+	// Write the content to the file
 	_, err = f.WriteString(sb.String())
 	return err
 }
 
-// GenerateComposeMultiService est un alias pour GenerateMultiServiceCompose
-// Ajouté pour compatibilité avec les tests
+// GenerateComposeMultiService is an alias for GenerateMultiServiceCompose
+// Added for compatibility with tests
 func GenerateComposeMultiService(serviceList ServiceList) error {
 	return GenerateMultiServiceCompose(serviceList)
 }

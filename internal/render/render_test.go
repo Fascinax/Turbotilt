@@ -10,28 +10,28 @@ func containsString(s, substr string) bool {
 	return len(s) > 0 && len(substr) > 0 && strings.Contains(s, substr)
 }
 
-// TestGenerateDockerfile teste la génération de Dockerfile
+// TestGenerateDockerfile tests the generation of Dockerfile
 func TestGenerateDockerfile(t *testing.T) {
-	// Création d”un répertoire temporaire pour les tests
+	// Create a temporary directory for tests
 	tempDir, err := os.MkdirTemp("", "turbotilt-render-test-*")
 	if err != nil {
-		t.Fatalf("Impossible de créer le répertoire temporaire: %v", err)
+		t.Fatalf("Unable to create temporary directory: %v", err)
 	}
 	defer os.RemoveAll(tempDir)
 
-	// Sauvegarde du répertoire de travail actuel
+	// Save the current working directory
 	originalDir, err := os.Getwd()
 	if err != nil {
-		t.Fatalf("Impossible d''obtenir le répertoire de travail: %v", err)
+		t.Fatalf("Unable to get current working directory: %v", err)
 	}
 
-	// Changer vers le répertoire temporaire
+	// Change to the temporary directory
 	if err := os.Chdir(tempDir); err != nil {
-		t.Fatalf("Impossible de changer vers le répertoire temporaire: %v", err)
+		t.Fatalf("Unable to change to temporary directory: %v", err)
 	}
 	defer os.Chdir(originalDir)
 
-	// Test 1: Génération pour Spring Boot
+	// Test 1: Generation for Spring Boot
 	t.Run("Spring Dockerfile", func(t *testing.T) {
 		// Options would normally be used to generate the Dockerfile
 		// but for testing, we”re using a hardcoded example
@@ -51,23 +51,23 @@ func TestGenerateDockerfile(t *testing.T) {
 			t.Fatalf("Failed to generate Dockerfile: %v", err)
 		}
 
-		// Vérifier que le fichier existe
+		// Check that the file exists
 		if _, err := os.Stat("Dockerfile"); os.IsNotExist(err) {
-			t.Errorf("Le Dockerfile n''a pas été créé")
+			t.Errorf("Dockerfile was not created")
 		}
 
-		// Lire le fichier généré
+		// Read the generated file
 		fileContent, err := os.ReadFile("Dockerfile")
 		if err != nil {
-			t.Errorf("Impossible de lire le Dockerfile: %v", err)
+			t.Errorf("Unable to read Dockerfile: %v", err)
 		}
 
-		// Vérifier que le contenu contient des éléments spécifiques à Spring
+		// Check that the content contains specific elements for Spring
 		if !containsString(string(fileContent), "eclipse-temurin") || !containsString(string(fileContent), "COPY --from=build") {
-			t.Errorf("Le Dockerfile ne contient pas les éléments attendus pour Spring")
+			t.Errorf("Dockerfile does not contain the expected elements for Spring")
 		}
 
-		// Nettoyer
+		// Clean up
 		os.Remove("Dockerfile")
 	})
 }

@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-// Implémentation mock de ConfigInterface pour les tests
+// Mock implementation of ConfigInterface for tests
 type mockConfig struct {
 	serviceName string
 	framework   string
@@ -22,113 +22,113 @@ func (m *mockConfig) GetFramework() string {
 }
 
 func TestNewAutoUpdateWatcher(t *testing.T) {
-	// Créer un mock de configuration
+	// Create a mock configuration
 	conf := &mockConfig{
 		serviceName: "test-service",
 		framework:   "spring",
 	}
 
-	// Créer un watcher
+	// Create a watcher
 	osPath := filepath.Join("test", "path", "Tiltfile")
 	watcher := NewAutoUpdateWatcher(osPath, conf)
 
-	// Vérifier les propriétés du watcher
+	// Verify the watcher properties
 	if watcher.tiltfilePath != osPath {
-		t.Errorf("tiltfilePath devrait être '%s', mais est '%s'", osPath, watcher.tiltfilePath)
+		t.Errorf("tiltfilePath should be '%s', but is '%s'", osPath, watcher.tiltfilePath)
 	}
 
 	expected := filepath.Join("test", "path")
 	if watcher.projectRoot != expected {
-		t.Errorf("projectRoot devrait être '%s', mais est '%s'", expected, watcher.projectRoot)
+		t.Errorf("projectRoot should be '%s', but is '%s'", expected, watcher.projectRoot)
 	}
 
 	if watcher.conf != conf {
-		t.Error("conf n'a pas été correctement assigné")
+		t.Error("conf was not correctly assigned")
 	}
 
 	if watcher.isRunning {
-		t.Error("isRunning devrait être false initialement")
+		t.Error("isRunning should be false initially")
 	}
 
 	if watcher.checkInterval != 5*time.Second {
-		t.Errorf("checkInterval devrait être 5s, mais est %v", watcher.checkInterval)
+		t.Errorf("checkInterval should be 5s, but is %v", watcher.checkInterval)
 	}
 }
 
 func TestAutoUpdateWatcherStart(t *testing.T) {
-	// Créer un répertoire temporaire pour le test
+	// Create a temporary directory for the test
 	tempDir := t.TempDir()
 	tiltfilePath := filepath.Join(tempDir, "Tiltfile")
 
-	// Créer un Tiltfile vide
+	// Create an empty Tiltfile
 	if err := os.WriteFile(tiltfilePath, []byte("# Test Tiltfile"), 0644); err != nil {
-		t.Fatalf("Impossible de créer le Tiltfile: %v", err)
+		t.Fatalf("Unable to create Tiltfile: %v", err)
 	}
 
-	// Créer un mock de configuration
+	// Create a mock configuration
 	conf := &mockConfig{
 		serviceName: "test-service",
 		framework:   "spring",
 	}
 
-	// Créer un watcher
+	// Create a watcher
 	watcher := NewAutoUpdateWatcher(tiltfilePath, conf)
 
-	// Démarrer le watcher
+	// Start the watcher
 	err := watcher.Start()
 	if err != nil {
-		t.Fatalf("Start() a retourné une erreur: %v", err)
+		t.Fatalf("Start() returned an error: %v", err)
 	}
 
-	// Vérifier que le watcher est en cours d'exécution
+	// Verify that the watcher is running
 	if !watcher.isRunning {
-		t.Error("isRunning devrait être true après Start()")
+		t.Error("isRunning should be true after Start()")
 	}
 
-	// Test de démarrage multiple
+	// Test multiple starts
 	err = watcher.Start()
 	if err == nil {
-		t.Error("Start() devrait retourner une erreur si le watcher est déjà en cours d'exécution")
+		t.Error("Start() should return an error if the watcher is already running")
 	}
 
-	// Arrêter le watcher
+	// Stop the watcher
 	watcher.Stop()
 
-	// Vérifier que le watcher est arrêté
+	// Verify that the watcher is stopped
 	if watcher.isRunning {
-		t.Error("isRunning devrait être false après Stop()")
+		t.Error("isRunning should be false after Stop()")
 	}
 }
 
 func TestTriggerUpdate(t *testing.T) {
-	// Créer un répertoire temporaire pour le test
+	// Create a temporary directory for the test
 	tempDir := t.TempDir()
 	tiltfilePath := filepath.Join(tempDir, "Tiltfile")
 
-	// Créer un Tiltfile vide
+	// Create an empty Tiltfile
 	if err := os.WriteFile(tiltfilePath, []byte("# Test Tiltfile"), 0644); err != nil {
-		t.Fatalf("Impossible de créer le Tiltfile: %v", err)
+		t.Fatalf("Unable to create Tiltfile: %v", err)
 	}
 
-	// Créer un mock de configuration
+	// Create a mock configuration
 	conf := &mockConfig{
 		serviceName: "test-service",
 		framework:   "spring",
 	}
 
-	// Créer un watcher
+	// Create a watcher
 	watcher := NewAutoUpdateWatcher(tiltfilePath, conf)
 
-	// Déclencher une mise à jour
+	// Trigger an update
 	watcher.TriggerUpdate()
 
-	// Vérifier que la mise à jour a été déclenchée
+	// Verify that the update was triggered
 	select {
 	case triggered := <-watcher.updateTriggered:
 		if !triggered {
-			t.Error("updateTriggered devrait être true")
+			t.Error("updateTriggered should be true")
 		}
 	default:
-		t.Error("TriggerUpdate() n'a pas envoyé de signal sur le canal updateTriggered")
+		t.Error("TriggerUpdate() did not send a signal on the updateTriggered channel")
 	}
 }

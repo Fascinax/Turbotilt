@@ -8,29 +8,29 @@ import (
 	"strings"
 )
 
-// Langue par défaut
+// Default language
 const (
 	DefaultLang = "fr"
 )
 
-// Translator gère les traductions
+// Translator manages translations
 type Translator struct {
 	currentLang  string
 	translations map[string]map[string]string
 }
 
-// NewTranslator crée un nouveau traducteur
+// NewTranslator creates a new translator
 func NewTranslator() *Translator {
 	t := &Translator{
 		currentLang:  DefaultLang,
 		translations: make(map[string]map[string]string),
 	}
 
-	// Charger les traductions intégrées
+	// Load built-in translations
 	t.translations["fr"] = frTranslations
 	t.translations["en"] = enTranslations
 
-	// Essayer de détecter la langue du système
+	// Try to detect system language
 	lang := os.Getenv("LANG")
 	if lang != "" {
 		lang = strings.Split(lang, "_")[0]
@@ -42,7 +42,7 @@ func NewTranslator() *Translator {
 	return t
 }
 
-// LoadTranslations charge les traductions depuis un fichier JSON
+// LoadTranslations loads translations from a JSON file
 func (t *Translator) LoadTranslations(dir string) error {
 	files, err := os.ReadDir(dir)
 	if err != nil {
@@ -70,7 +70,7 @@ func (t *Translator) LoadTranslations(dir string) error {
 	return nil
 }
 
-// SetLang définit la langue courante
+// SetLang sets the current language
 func (t *Translator) SetLang(lang string) bool {
 	if _, ok := t.translations[lang]; ok {
 		t.currentLang = lang
@@ -79,14 +79,14 @@ func (t *Translator) SetLang(lang string) bool {
 	return false
 }
 
-// GetLang renvoie la langue courante
+// GetLang returns the current language
 func (t *Translator) GetLang() string {
 	return t.currentLang
 }
 
-// T traduit une clé
+// T translates a key
 func (t *Translator) T(key string, args ...interface{}) string {
-	// Essayer la langue courante
+	// Try current language
 	if trans, ok := t.translations[t.currentLang]; ok {
 		if str, ok := trans[key]; ok {
 			if len(args) > 0 {
@@ -96,7 +96,7 @@ func (t *Translator) T(key string, args ...interface{}) string {
 		}
 	}
 
-	// Essayer la langue par défaut si différente
+	// Try default language if different
 	if t.currentLang != DefaultLang {
 		if trans, ok := t.translations[DefaultLang]; ok {
 			if str, ok := trans[key]; ok {
@@ -108,19 +108,19 @@ func (t *Translator) T(key string, args ...interface{}) string {
 		}
 	}
 
-	// Fallback à la clé
+	// Fallback to key
 	return key
 }
 
 // Global instance
 var global *Translator
 
-// Init initialise le traducteur global
+// Init initializes the global translator
 func Init() {
 	global = NewTranslator()
 }
 
-// SetLanguage définit la langue globale
+// SetLanguage sets the global language
 func SetLanguage(lang string) bool {
 	if global == nil {
 		Init()
@@ -128,7 +128,7 @@ func SetLanguage(lang string) bool {
 	return global.SetLang(lang)
 }
 
-// T traduit une clé avec le traducteur global
+// T translates a key with the global translator
 func T(key string, args ...interface{}) string {
 	if global == nil {
 		Init()

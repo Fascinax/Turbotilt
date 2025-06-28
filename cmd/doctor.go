@@ -14,12 +14,12 @@ import (
 	"turbotilt/internal/logger"
 )
 
-// Structure pour stocker les résultats de diagnostics - commented out as currently unused
+// Commented out diagnostic result structure - not used in current implementation
 // type diagResult struct {
 // 	installed bool
 // 	version   string
 // 	detail    string
-// 	weight    int // Importance: 3 = critique, 2 = important, 1 = optionnel
+// 	weight    int // Importance: 3 = critical, 2 = important, 1 = optional
 // 	required  bool
 // }
 
@@ -30,40 +30,40 @@ var (
 	showSummary      bool
 	logFilePath      string
 	validateManifest bool
-	// Commented out as currently unused
+	// Commented out variables - not used in current implementation
 	// checkTiltfile    bool
 	// fixMode          bool
 )
 
 var doctorCmd = &cobra.Command{
 	Use:   "doctor",
-	Short: "Vérifie installation & config",
-	Long: `Vérifie l'installation et la configuration de l'environnement Turbotilt.
-Effectue un diagnostic complet des dépendances et outils nécessaires.
-Fournit un score de santé et des recommandations pour réparer les problèmes.
+	Short: "Checks installation & config",
+	Long: `Checks the installation and configuration of the Turbotilt environment.
+Performs a complete diagnostic of dependencies and necessary tools.
+Provides a health score and recommendations to fix problems.
 
-Exemples:
-  turbotilt doctor             # Analyse complète
-  turbotilt doctor --verbose   # Analyse complète avec détails
-  turbotilt doctor --debug     # Mode debug pour information détaillée`,
+Examples:
+  turbotilt doctor             # Complete analysis
+  turbotilt doctor --verbose   # Complete analysis with details
+  turbotilt doctor --debug     # Debug mode for detailed information`,
 	Run: func(cmd *cobra.Command, args []string) {
-		// Enregistrer le temps de démarrage pour calculer la durée d'exécution
+		// Record start time to calculate execution duration
 		startTime := time.Now()
 
-		// Configurer le logger
+		// Configure logger
 		if verbose {
 			logger.SetLevel(logger.DEBUG)
-			logger.Debug("Mode verbeux activé")
+			logger.Debug("Verbose mode enabled")
 		}
 
-		// Si l'option validate-manifest est activée, valider uniquement le manifeste sans faire le reste du diagnostic
+		// If validate-manifest option is enabled, only validate the manifest without running the full diagnostic
 		if validateManifest {
-			// Importer le package config
+			// Import config package
 			validateManifestFile()
 			return
 		}
 
-		// Configurer le chemin du fichier de log si non spécifié
+		// Configure log file path if not specified
 		if logToFile && logFilePath == "" {
 			logFilePath = fmt.Sprintf("turbotilt-doctor-%s.log",
 				time.Now().Format("20060102-150405"))
@@ -71,145 +71,143 @@ Exemples:
 
 		if logToFile {
 			if err := logger.EnableFileLogging(logFilePath); err != nil {
-				fmt.Printf("⚠️ Impossible de créer le fichier de log: %v\n", err)
+				fmt.Printf("⚠️ Unable to create log file: %v\n", err)
 			} else {
 				defer logger.DisableFileLogging()
 				logger.Info("Log file created: %s", logFilePath)
 				if verbose {
-					fmt.Printf("📄 Logs enregistrés dans: %s\n\n", logFilePath)
+					fmt.Printf("📄 Logs saved to: %s\n\n", logFilePath)
 				}
 			}
 		}
 
-		logger.Info("=== Diagnostic de l'environnement Turbotilt ===")
-		logger.Info("Démarré le %s", time.Now().Format("2006-01-02 15:04:05"))
-		logger.Info("Système d'exploitation: %s", runtime.GOOS)
-		fmt.Println("🔍 Vérification de l'environnement Turbotilt...")
+		logger.Info("=== Turbotilt Environment Diagnostic ===")
+		logger.Info("Started on %s", time.Now().Format("2006-01-02 15:04:05"))
+		logger.Info("Operating system: %s", runtime.GOOS)
+		fmt.Println("🔍 Checking Turbotilt environment...")
 
-		// On a déjà déclaré startTime, pas besoin de redéclaration
-
-		// Structure pour stocker les résultats
+		// Structure to store results
 		type diagResult struct {
 			installed bool
 			version   string
 			detail    string
-			weight    int // Importance: 3 = critique, 2 = important, 1 = optionnel
+			weight    int // Importance: 3 = critical, 2 = important, 1 = optional
 			required  bool
 		}
 		results := make(map[string]diagResult)
 
-		fmt.Println("\n📋 Vérification des dépendances requises:")
-		logger.Debug("Checking required dependencies...")
+	fmt.Println("\n📋 Checking required dependencies:")
+	logger.Debug("Checking required dependencies...")
 
-		// Vérifier Docker (critique)
+		// Check Docker (critical)
 		fmt.Print("⏳ Docker : ")
 		logger.Debug("Checking Docker installation...")
 		if version, err := execCommand("docker", "--version"); err == nil {
 			truncVersion := strings.TrimSpace(version)
 			fmt.Printf("✅ %s\n", truncVersion)
-			logger.Info("Docker installé: %s", truncVersion)
+			logger.Info("Docker installed: %s", truncVersion)
 
-			// Vérification supplémentaire du démon Docker
+			// Additional check for Docker daemon
 			if _, err := execCommand("docker", "info"); err != nil {
-				fmt.Println("   ⚠️ Le démon Docker ne semble pas être en cours d'exécution")
-				logger.Warning("Le démon Docker ne répond pas")
-				results["docker"] = diagResult{true, truncVersion, "Le démon ne répond pas", 3, true}
+				fmt.Println("   ⚠️ Docker daemon doesn't appear to be running")
+				logger.Warning("Docker daemon not responding")
+				results["docker"] = diagResult{true, truncVersion, "Daemon not responding", 3, true}
 			} else {
 				results["docker"] = diagResult{true, truncVersion, "OK", 3, true}
 			}
 		} else {
-			fmt.Println("❌ Non installé ou inaccessible")
-			logger.Warning("Docker non installé ou inaccessible")
-			results["docker"] = diagResult{false, "", "Non installé", 3, true}
+			fmt.Println("❌ Not installed or not accessible")
+			logger.Warning("Docker not installed or not accessible")
+			results["docker"] = diagResult{false, "", "Not installed", 3, true}
 		}
 
-		// Vérifier Docker Compose (critique)
+		// Check Docker Compose (critical)
 		fmt.Print("⏳ Docker Compose : ")
 		logger.Debug("Checking Docker Compose installation...")
 		if version, err := execCommand("docker", "compose", "version"); err == nil {
 			truncVersion := strings.Split(version, "\n")[0]
 			fmt.Printf("✅ %s\n", truncVersion)
-			logger.Info("Docker Compose installé: %s", truncVersion)
+			logger.Info("Docker Compose installed: %s", truncVersion)
 			results["docker-compose"] = diagResult{true, truncVersion, "OK", 3, true}
 		} else {
-			fmt.Println("❌ Non installé ou inaccessible")
-			logger.Warning("Docker Compose non installé ou inaccessible")
-			results["docker-compose"] = diagResult{false, "", "Non installé", 3, true}
+			fmt.Println("❌ Not installed or not accessible")
+			logger.Warning("Docker Compose not installed or not accessible")
+			results["docker-compose"] = diagResult{false, "", "Not installed", 3, true}
 		}
 
-		// Vérifier Tilt (important)
+		// Check Tilt (important)
 		fmt.Print("⏳ Tilt : ")
 		logger.Debug("Checking Tilt installation...")
 		if version, err := execCommand("tilt", "version"); err == nil {
 			truncVersion := strings.Split(version, "\n")[0]
 			fmt.Printf("✅ %s\n", truncVersion)
-			logger.Info("Tilt installé: %s", truncVersion)
+			logger.Info("Tilt installed: %s", truncVersion)
 			results["tilt"] = diagResult{true, truncVersion, "OK", 2, false}
 		} else {
-			fmt.Println("❌ Non installé ou inaccessible")
-			fmt.Println("   👉 Pour installer Tilt: https://docs.tilt.dev/install.html")
-			logger.Warning("Tilt non installé ou inaccessible")
-			results["tilt"] = diagResult{false, "", "Non installé", 2, false}
+			fmt.Println("❌ Not installed or not accessible")
+			fmt.Println("   👉 To install Tilt: https://docs.tilt.dev/install.html")
+			logger.Warning("Tilt not installed or not accessible")
+			results["tilt"] = diagResult{false, "", "Not installed", 2, false}
 		}
 
-		fmt.Println("\n📋 Vérification des outils de développement:")
-		logger.Debug("Checking development tools...")
+	fmt.Println("\n📋 Checking development tools:")
+	logger.Debug("Checking development tools...")
 
-		// Vérifier Java (optionnel)
+		// Check Java (optional)
 		fmt.Print("⏳ Java : ")
 		logger.Debug("Checking Java installation...")
 		if version, err := execCommand("java", "-version"); err == nil {
 			truncVersion := strings.Split(version, "\n")[0]
 			fmt.Printf("✅ %s\n", truncVersion)
-			logger.Info("Java installé: %s", truncVersion)
+			logger.Info("Java installed: %s", truncVersion)
 			results["java"] = diagResult{true, truncVersion, "OK", 1, false}
 		} else {
-			fmt.Println("❌ Non installé ou inaccessible")
-			logger.Warning("Java non installé ou inaccessible")
-			results["java"] = diagResult{false, "", "Non installé", 1, false}
+			fmt.Println("❌ Not installed or not accessible")
+			logger.Warning("Java not installed or not accessible")
+			results["java"] = diagResult{false, "", "Not installed", 1, false}
 		}
 
-		// Vérifier Maven (optionnel)
+		// Check Maven (optional)
 		logger.Debug("Checking Maven installation...")
 		fmt.Print("⏳ Maven : ")
 		if version, err := execCommand("mvn", "--version"); err == nil {
 			truncVersion := strings.Split(version, "\n")[0]
 			fmt.Printf("✅ %s\n", truncVersion)
-			logger.Info("Maven installé: %s", truncVersion)
+			logger.Info("Maven installed: %s", truncVersion)
 			results["maven"] = diagResult{true, truncVersion, "OK", 1, false}
 		} else {
-			fmt.Println("⚠️ Non installé (requis pour certains projets)")
-			logger.Warning("Maven non installé")
-			results["maven"] = diagResult{false, "", "Non installé", 1, false}
+			fmt.Println("⚠️ Not installed (required for some projects)")
+			logger.Warning("Maven not installed")
+			results["maven"] = diagResult{false, "", "Not installed", 1, false}
 		}
 
 		logger.Debug("Checking Gradle installation...")
-		// Vérifier Gradle
+		// Check Gradle
 		fmt.Print("⏳ Gradle : ")
 		if version, err := execCommand("gradle", "--version"); err == nil {
 			truncVersion := strings.Split(strings.Split(version, "\n")[0], "----")[0]
 			fmt.Printf("✅ %s\n", truncVersion)
-			logger.Info("Gradle installé: %s", truncVersion)
+			logger.Info("Gradle installed: %s", truncVersion)
 			results["gradle"] = diagResult{true, truncVersion, "OK", 1, false}
 		} else {
-			fmt.Println("⚠️ Non installé (requis pour certains projets)")
-			logger.Warning("Gradle non installé")
-			results["gradle"] = diagResult{false, "", "Non installé", 1, false}
+			fmt.Println("⚠️ Not installed (required for some projects)")
+			logger.Warning("Gradle not installed")
+			results["gradle"] = diagResult{false, "", "Not installed", 1, false}
 		}
 
 		logger.Debug("Checking project files...")
-		// Vérifier le projet courant
-		fmt.Println("\n📋 Projet courant :")
+		// Check current project
+		fmt.Println("\n📋 Current project:")
 
-		// Vérifier si les fichiers requis existent
+		// Check if required files exist
 		projectFiles := checkProjectFiles()
 
-		// Analyser la santé du projet localement
+		// Analyze project health locally
 		projectHealth := func(diagnostics map[string]diagResult) int {
 			total := 0
 			max := 0
 
-			// Additionner les poids des composants installés
+			// Sum the weights of installed components
 			for tool, result := range diagnostics {
 				weight := result.weight
 				max += weight
@@ -218,107 +216,107 @@ Exemples:
 					if result.detail == "OK" {
 						total += weight
 					} else if !result.required {
-						// Si pas requis, on compte quand même des points partiels
+						// If not required, we still count partial points
 						total += weight / 2
 					}
 				}
 
-				logger.Debug("Évaluation de %s: installé=%t, poids=%d, détail=%s, score partiel=%d/%d",
+				logger.Debug("Evaluation of %s: installed=%t, weight=%d, detail=%s, partial score=%d/%d",
 					tool, result.installed, weight, result.detail, total, max)
 			}
 
-			// Convertir en pourcentage
+			// Convert to percentage
 			if max == 0 {
 				return 0
 			}
 			return total * 100 / max
 		}(results)
 
-		// Afficher les recommandations
-		fmt.Println("\n📋 Recommandations :")
-		if !results["docker"].installed {
-			fmt.Println("❗ Docker est requis : https://docs.docker.com/get-docker/")
-			logger.Error("Docker manquant - installation requise")
-		} else if results["docker"].detail != "OK" {
-			fmt.Println("⚠️ Assurez-vous que le daemon Docker est en cours d'exécution")
-			logger.Warning("Problème avec Docker: %s", results["docker"].detail)
-		}
+	// Display recommendations
+	fmt.Println("\n📋 Recommendations:")
+	if !results["docker"].installed {
+		fmt.Println("❗ Docker is required: https://docs.docker.com/get-docker/")
+		logger.Error("Docker missing - installation required")
+	} else if results["docker"].detail != "OK" {
+		fmt.Println("⚠️ Make sure the Docker daemon is running")
+		logger.Warning("Problem with Docker: %s", results["docker"].detail)
+	}
 
-		if !results["docker-compose"].installed {
-			fmt.Println("❗ Docker Compose est requis : https://docs.docker.com/compose/install/")
-			logger.Error("Docker Compose manquant - installation requise")
-		}
+	if !results["docker-compose"].installed {
+		fmt.Println("❗ Docker Compose is required: https://docs.docker.com/compose/install/")
+		logger.Error("Docker Compose missing - installation required")
+	}
 
-		if !results["tilt"].installed {
-			fmt.Println("❗ Tilt est fortement recommandé : https://docs.tilt.dev/install.html")
-			logger.Warning("Tilt manquant - installation recommandée")
-		}
+	if !results["tilt"].installed {
+		fmt.Println("❗ Tilt is strongly recommended: https://docs.tilt.dev/install.html")
+		logger.Warning("Tilt missing - installation recommended")
+	}
 
-		// Recommandations spécifiques pour les développeurs Java
+		// Specific recommendations for Java developers
 		if len(projectFiles["java"]) > 0 && !results["java"].installed {
-			fmt.Println("⚠️ Des fichiers Java ont été détectés mais Java n'est pas installé")
-			logger.Warning("Java requis pour ce projet mais non installé")
+			fmt.Println("⚠️ Java files were detected but Java is not installed")
+			logger.Warning("Java required for this project but not installed")
 		}
 
 		if len(projectFiles["maven"]) > 0 && !results["maven"].installed {
-			fmt.Println("⚠️ Des fichiers Maven ont été détectés mais Maven n'est pas installé")
-			logger.Warning("Maven requis pour ce projet mais non installé")
+			fmt.Println("⚠️ Maven files were detected but Maven is not installed")
+			logger.Warning("Maven required for this project but not installed")
 		}
 
 		if len(projectFiles["gradle"]) > 0 && !results["gradle"].installed {
-			fmt.Println("⚠️ Des fichiers Gradle ont été détectés mais Gradle n'est pas installé")
-			logger.Warning("Gradle requis pour ce projet mais non installé")
+			fmt.Println("⚠️ Gradle files were detected but Gradle is not installed")
+			logger.Warning("Gradle required for this project but not installed")
 		}
 
-		// Afficher la santé globale du projet
-		fmt.Println("\n📊 Santé globale :", healthToEmoji(projectHealth))
-		logger.Info("Santé globale du projet: %d%%", projectHealth)
+		// Display the overall project health
+		fmt.Println("\n📊 Overall health:", healthToEmoji(projectHealth))
+		logger.Info("Overall project health: %d%%", projectHealth)
 
-		fmt.Println("\n🔧 Commandes disponibles :")
-		fmt.Println("▶️ turbotilt init   : Initialiser un projet")
-		fmt.Println("▶️ turbotilt up     : Démarrer l'environnement")
-		fmt.Println("▶️ turbotilt stop   : Arrêter l'environnement")
-		fmt.Println("▶️ turbotilt doctor : Vérifier la configuration")
+		fmt.Println("\n🔧 Available commands:")
+		fmt.Println("▶️ turbotilt init   : Initialize a project")
+		fmt.Println("▶️ turbotilt up     : Start the environment")
+		fmt.Println("▶️ turbotilt stop   : Stop the environment")
+		fmt.Println("▶️ turbotilt doctor : Check configuration")
 
-		// Calculer et afficher le temps d'exécution
+		// Calculate and display execution time
 		duration := time.Since(startTime)
-		fmt.Printf("\n⏱️ Diagnostic complété en %.2f secondes\n", duration.Seconds())
+		fmt.Printf("\n⏱️ Diagnostic completed in %.2f seconds\n", duration.Seconds())
 
-		if logToFile {
-			fmt.Printf("📄 Log enregistré dans: %s\n", logFilePath)
-		}
+	if logToFile {
+		fmt.Printf("📄 Log saved to: %s\n", logFilePath)
+	}
 
 		logger.Info("Diagnostic terminé en %.2f secondes", duration.Seconds())
 		logger.Debug("Doctor command completed")
 	},
 }
 
-// Fonction supprimée car remplacée par une implémentation locale
+// Function removed because it was replaced by a local implementation
 
-// healthToEmoji convertit un score de santé en une représentation emoji avec barre de progression
+// healthToEmoji converts a health score to an emoji representation with a progress bar
 func healthToEmoji(health int) string {
 	var emoji, grade, barGraph string
 
-	// Déterminer le grade
+	// Determine the grade
 	switch {
 	case health >= 90:
 		emoji = "✅"
 		grade = "Excellent"
 	case health >= 70:
 		emoji = "🟢"
-		grade = "Bon"
+		grade = "Good"
 	case health >= 50:
 		emoji = "🟡"
-		grade = "Moyen"
+		grade = "Average"
 	case health >= 30:
 		emoji = "🟠"
-		grade = "Problématique"
+		grade = "Problematic"
 	default:
 		emoji = "🔴"
-		grade = "Critique"
+		grade = "Critical"
 	}
 
-	// Créer une barre de progression visuelle
+	// Create a visual progress bar
 	completed := health / 10
 	remaining := 10 - completed
 
@@ -327,29 +325,29 @@ func healthToEmoji(health int) string {
 	return fmt.Sprintf("%s %s (%d%%) %s", emoji, grade, health, barGraph)
 }
 
-// execCommand exécute une commande et renvoie sa sortie
+// execCommand executes a command and returns its output
 func execCommand(command string, args ...string) (string, error) {
-	logger.Debug("Exécution de la commande: %s %s", command, strings.Join(args, " "))
+	logger.Debug("Executing command: %s %s", command, strings.Join(args, " "))
 
 	cmd := exec.Command(command, args...)
 	output, err := cmd.CombinedOutput()
 
 	if err != nil && verbose {
-		logger.Debug("Erreur d'exécution: %v", err)
+		logger.Debug("Execution error: %v", err)
 	}
 
-	// Pour des commandes comme 'java -version' qui écrivent sur stderr
+	// For commands like 'java -version' that write to stderr
 	outputStr := string(output)
 	if outputStr == "" && err == nil {
-		// Certaines commandes peuvent ne pas produire de sortie mais réussir
-		outputStr = "OK (pas de sortie)"
+		// Some commands might not produce output but succeed
+		outputStr = "OK (no output)"
 	}
 
 	return outputStr, err
 }
 
 func checkProjectFiles() map[string][]string {
-	// Map pour stocker les fichiers trouvés par catégorie
+	// Map to store files found by category
 	foundFiles := map[string][]string{
 		"java":   {},
 		"maven":  {},
@@ -374,60 +372,59 @@ func checkProjectFiles() map[string][]string {
 		{"gradlew", "Gradle Wrapper", "gradle"},
 	}
 
-	fmt.Println("Vérification des fichiers de projet:")
+	fmt.Println("Checking project files:")
 
 	for _, check := range fileChecks {
-		if _, err := os.Stat(check.path); err == nil {
-			fmt.Printf("  ✅ %s trouvé (%s)\n", check.path, check.desc)
-			logger.Info("Fichier trouvé: %s (%s)", check.path, check.desc)
-			foundFiles[check.category] = append(foundFiles[check.category], check.path)
-		} else if verbose {
-			fmt.Printf("  ❌ %s non trouvé\n", check.path)
-			logger.Debug("Fichier manquant: %s", check.path)
+		if _, err := os.Stat(check.path); err == nil {		fmt.Printf("  ✅ %s found (%s)\n", check.path, check.desc)
+		logger.Info("File found: %s (%s)", check.path, check.desc)
+		foundFiles[check.category] = append(foundFiles[check.category], check.path)
+	} else if verbose {
+		fmt.Printf("  ❌ %s not found\n", check.path)
+		logger.Debug("Missing file: %s", check.path)
 		}
 	}
 
 	if len(foundFiles["maven"]) > 0 {
-		fmt.Println("  📄 Projet Maven détecté")
+	if len(foundFiles["maven"]) > 0 {
+		fmt.Println("  📄 Maven project detected")
 	}
 	if len(foundFiles["gradle"]) > 0 {
-		fmt.Println("  📄 Projet Gradle détecté")
+		fmt.Println("  📄 Gradle project detected")
 	}
 	if len(foundFiles["docker"]) > 0 {
-		fmt.Println("  📦 Configuration Docker détectée")
+		fmt.Println("  📦 Docker configuration detected")
 	}
 	if len(foundFiles["tilt"]) > 0 {
-		fmt.Println("  🚀 Configuration Tilt détectée")
+		fmt.Println("  🚀 Tilt configuration detected")
 	}
-
 	return foundFiles
 }
 
-// validateManifestFile valide le fichier manifeste turbotilt.yaml
+// validateManifestFile validates the turbotilt.yaml manifest file
 func validateManifestFile() {
-	fmt.Println("🔍 Validation du manifeste...")
+	fmt.Println("🔍 Validating manifest...")
 
-	// Rechercher le manifeste
+	// Find the manifest
 	configPath, isManifest, err := config.FindConfiguration()
 	if err != nil || !isManifest {
-		fmt.Println("❌ Manifeste turbotilt.yaml introuvable")
+		fmt.Println("❌ turbotilt.yaml manifest not found")
 		return
 	}
 
-	fmt.Printf("📄 Manifeste trouvé: %s\n", configPath)
+	fmt.Printf("📄 Manifest found: %s\n", configPath)
 
-	// Charger et valider le manifeste
+	// Load and validate the manifest
 	manifest, err := config.LoadManifest(configPath)
 	if err != nil {
-		fmt.Printf("❌ Erreur de validation: %v\n", err)
+		fmt.Printf("❌ Validation error: %v\n", err)
 		return
 	}
 
-	// Afficher un résumé du manifeste
-	fmt.Println("✅ Le manifeste est valide!")
-	fmt.Printf("📊 Contient %d service(s):\n", len(manifest.Services))
+	// Display a summary of the manifest
+	fmt.Println("✅ The manifest is valid!")
+	fmt.Printf("📊 Contains %d service(s):\n", len(manifest.Services))
 
-	// Afficher les détails des services
+	// Display service details
 	for i, service := range manifest.Services {
 		fmt.Printf("   [%d] %s\n", i+1, service.Name)
 
@@ -437,7 +434,7 @@ func validateManifestFile() {
 			fmt.Printf("       - Port: %s\n", service.Port)
 			fmt.Printf("       - Java: %s\n", service.Java)
 		} else if service.Type != "" {
-			fmt.Printf("       - Type: Service dépendant (%s)\n", service.Type)
+			fmt.Printf("       - Type: Dependent service (%s)\n", service.Type)
 			if service.Version != "" {
 				fmt.Printf("       - Version: %s\n", service.Version)
 			}
@@ -448,10 +445,10 @@ func validateManifestFile() {
 func init() {
 	rootCmd.AddCommand(doctorCmd)
 
-	doctorCmd.Flags().BoolVarP(&verbose, "verbose", "v", false, "Afficher des informations détaillées")
-	doctorCmd.Flags().BoolVarP(&logToFile, "log", "l", false, "Enregistrer les résultats dans un fichier log")
-	doctorCmd.Flags().StringVar(&logFilePath, "log-file", "", "Chemin du fichier log à utiliser")
-	doctorCmd.Flags().BoolVar(&showAllInfo, "all", false, "Afficher toutes les informations")
-	doctorCmd.Flags().BoolVar(&showSummary, "summary", false, "Afficher uniquement le résumé")
-	doctorCmd.Flags().BoolVar(&validateManifest, "validate-manifest", false, "Valider la syntaxe du manifeste turbotilt.yaml")
+	doctorCmd.Flags().BoolVarP(&verbose, "verbose", "v", false, "Display detailed information")
+	doctorCmd.Flags().BoolVarP(&logToFile, "log", "l", false, "Save results to a log file")
+	doctorCmd.Flags().StringVar(&logFilePath, "log-file", "", "Path to the log file to use")
+	doctorCmd.Flags().BoolVar(&showAllInfo, "all", false, "Show all information")
+	doctorCmd.Flags().BoolVar(&showSummary, "summary", false, "Show summary only")
+	doctorCmd.Flags().BoolVar(&validateManifest, "validate-manifest", false, "Validate the syntax of turbotilt.yaml manifest")
 }

@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-// LogLevel représente le niveau de log
+// LogLevel represents the logging level
 type LogLevel int
 
 const (
@@ -17,7 +17,7 @@ const (
 	FATAL
 )
 
-// Configuration globale du logger
+// Global logger configuration
 var (
 	currentLevel LogLevel = INFO
 	logFile      *os.File
@@ -25,12 +25,12 @@ var (
 	useEmojis    bool = true
 )
 
-// SetLevel définit le niveau minimum de log
+// SetLevel sets the minimum log level
 func SetLevel(level LogLevel) {
 	currentLevel = level
 }
 
-// EnableFileLogging active la journalisation dans un fichier
+// EnableFileLogging enables logging to a file
 func EnableFileLogging(path string) error {
 	var err error
 	logFile, err = os.OpenFile(path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
@@ -40,7 +40,7 @@ func EnableFileLogging(path string) error {
 	return nil
 }
 
-// DisableFileLogging désactive la journalisation dans un fichier
+// DisableFileLogging disables file logging and closes the file
 func DisableFileLogging() {
 	if logFile != nil {
 		logFile.Close()
@@ -48,56 +48,54 @@ func DisableFileLogging() {
 	}
 }
 
-// SetUseColors active/désactive les couleurs dans les logs
+// SetUseColors enables/disables colors in log output
 func SetUseColors(use bool) {
 	useColors = use
 }
 
-// SetUseEmojis active/désactive les emojis dans les logs
+// SetUseEmojis enables/disables emojis in log output
 func SetUseEmojis(use bool) {
 	useEmojis = use
 }
 
-// Debug log un message au niveau DEBUG
+// Debug logs a message at DEBUG level
 func Debug(format string, args ...interface{}) {
 	if currentLevel <= DEBUG {
 		log(DEBUG, format, args...)
 	}
 }
 
-// Info log un message au niveau INFO
+// Info logs a message at INFO level
 func Info(format string, args ...interface{}) {
 	if currentLevel <= INFO {
 		log(INFO, format, args...)
 	}
 }
 
-// Warning log un message au niveau WARNING
+// Warning logs a message at WARNING level
 func Warning(format string, args ...interface{}) {
 	if currentLevel <= WARNING {
 		log(WARNING, format, args...)
 	}
 }
 
-// Error log un message au niveau ERROR
+// Error logs a message at ERROR level
 func Error(format string, args ...interface{}) {
 	if currentLevel <= ERROR {
 		log(ERROR, format, args...)
 	}
 }
 
-// Fatal log un message et termine le programme
+// Fatal logs a message at FATAL level and terminates the program
 func Fatal(format string, args ...interface{}) {
 	log(FATAL, format, args...)
 	os.Exit(1)
 }
 
-// log est la fonction interne de journalisation
+// log is the internal logging function
 func log(level LogLevel, format string, args ...interface{}) {
-	// Timestamp
 	timestamp := time.Now().Format("2006-01-02 15:04:05")
 
-	// Préfixes selon le niveau
 	var levelStr, colorPrefix, colorSuffix, emoji string
 
 	switch level {
@@ -107,15 +105,15 @@ func log(level LogLevel, format string, args ...interface{}) {
 		emoji = "🔍"
 	case INFO:
 		levelStr = "INFO"
-		colorPrefix = "\033[32m" // Vert
+		colorPrefix = "\033[32m" // Green
 		emoji = "ℹ️"
 	case WARNING:
 		levelStr = "WARN"
-		colorPrefix = "\033[33m" // Jaune
+		colorPrefix = "\033[33m" // Yellow
 		emoji = "⚠️"
 	case ERROR:
 		levelStr = "ERROR"
-		colorPrefix = "\033[31m" // Rouge
+		colorPrefix = "\033[31m" // Red
 		emoji = "❌"
 	case FATAL:
 		levelStr = "FATAL"
@@ -133,7 +131,6 @@ func log(level LogLevel, format string, args ...interface{}) {
 		emoji = ""
 	}
 
-	// Formater le message
 	message := fmt.Sprintf(format, args...)
 	logLine := fmt.Sprintf("%s %s[%s]%s %s%s",
 		timestamp,
@@ -143,12 +140,9 @@ func log(level LogLevel, format string, args ...interface{}) {
 		emoji,
 		message)
 
-	// Afficher sur la console
 	fmt.Println(logLine)
 
-	// Enregistrer dans le fichier si configuré
 	if logFile != nil {
-		// Sans couleurs dans le fichier
 		fileLogLine := fmt.Sprintf("%s [%s] %s\n", timestamp, levelStr, message)
 		if _, err := logFile.WriteString(fileLogLine); err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to write to log file: %v\n", err)

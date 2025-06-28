@@ -6,30 +6,30 @@ import (
 	"testing"
 )
 
-// TestDetectFramework teste la fonctionnalité de détection de framework
+// TestDetectFramework tests the framework detection functionality
 func TestDetectFramework(t *testing.T) {
-	// Création d'un répertoire temporaire pour les tests
+	// Create a temporary directory for tests
 	tempDir, err := os.MkdirTemp("", "turbotilt-test-*")
 	if err != nil {
-		t.Fatalf("Impossible de créer le répertoire temporaire: %v", err)
+		t.Fatalf("Unable to create temporary directory: %v", err)
 	}
 	defer os.RemoveAll(tempDir)
 
-	// Sauvegarde du répertoire de travail actuel
+	// Save current working directory
 	originalDir, err := os.Getwd()
 	if err != nil {
-		t.Fatalf("Impossible d'obtenir le répertoire courant: %v", err)
+		t.Fatalf("Unable to get current directory: %v", err)
 	}
 
-	// Changer au répertoire temporaire pour les tests
+	// Change to temporary directory for tests
 	if err := os.Chdir(tempDir); err != nil {
-		t.Fatalf("Impossible de changer de répertoire: %v", err)
+		t.Fatalf("Unable to change directory: %v", err)
 	}
-	defer os.Chdir(originalDir) // Restaurer le répertoire de travail à la fin
+	defer os.Chdir(originalDir) // Restore working directory at the end
 
-	// Test 1: Projet Maven Spring Boot
+	// Test 1: Maven Spring Boot Project
 	t.Run("Spring Boot Maven Project", func(t *testing.T) {
-		// Créer un faux pom.xml pour Spring Boot
+		// Create a mock pom.xml for Spring Boot
 		pomContent := `<?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" 
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -54,25 +54,25 @@ func TestDetectFramework(t *testing.T) {
 </project>`
 
 		if err := os.WriteFile("pom.xml", []byte(pomContent), 0644); err != nil {
-			t.Fatalf("Erreur lors de la création du fichier pom.xml: %v", err)
+			t.Fatalf("Error creating pom.xml file: %v", err)
 		}
 
-		// Tester la détection
+		// Test detection
 		framework, err := DetectFramework()
 		if err != nil {
-			t.Errorf("Erreur lors de la détection du framework: %v", err)
+			t.Errorf("Error detecting framework: %v", err)
 		}
 		if framework != "spring" {
-			t.Errorf("Framework détecté incorrect. Attendu: %s, Obtenu: %s", "spring", framework)
+			t.Errorf("Incorrect detected framework. Expected: %s, Got: %s", "spring", framework)
 		}
 
-		// Nettoyer
+		// Cleanup
 		os.Remove("pom.xml")
 	})
 
-	// Test 2: Projet Quarkus Maven
+	// Test 2: Quarkus Maven Project
 	t.Run("Quarkus Maven Project", func(t *testing.T) {
-		// Créer un faux pom.xml pour Quarkus
+		// Create a mock pom.xml for Quarkus
 		pomContent := `<?xml version="1.0" encoding="UTF-8"?>
 <project>
     <modelVersion>4.0.0</modelVersion>
@@ -89,25 +89,25 @@ func TestDetectFramework(t *testing.T) {
 </project>`
 
 		if err := os.WriteFile("pom.xml", []byte(pomContent), 0644); err != nil {
-			t.Fatalf("Erreur lors de la création du fichier pom.xml: %v", err)
+			t.Fatalf("Error creating pom.xml file: %v", err)
 		}
 
-		// Tester la détection
+		// Test detection
 		framework, err := DetectFramework()
 		if err != nil {
-			t.Errorf("Erreur lors de la détection du framework: %v", err)
+			t.Errorf("Error detecting framework: %v", err)
 		}
 		if framework != "quarkus" {
-			t.Errorf("Framework détecté incorrect. Attendu: %s, Obtenu: %s", "quarkus", framework)
+			t.Errorf("Incorrect detected framework. Expected: %s, Got: %s", "quarkus", framework)
 		}
 
-		// Nettoyer
+		// Cleanup
 		os.Remove("pom.xml")
 	})
 
-	// Test 3: Projet Gradle
+	// Test 3: Gradle Project
 	t.Run("Gradle Project", func(t *testing.T) {
-		// Créer un faux build.gradle pour Spring Boot
+		// Create a mock build.gradle for Spring Boot
 		gradleContent := `
 plugins {
     id 'org.springframework.boot' version '2.7.0'
@@ -129,44 +129,44 @@ dependencies {
 }
 `
 		if err := os.WriteFile("build.gradle", []byte(gradleContent), 0644); err != nil {
-			t.Fatalf("Erreur lors de la création du fichier build.gradle: %v", err)
+			t.Fatalf("Error creating build.gradle file: %v", err)
 		}
 
-		// Tester la détection
+		// Test detection
 		framework, err := DetectFramework()
 		if err != nil {
-			t.Errorf("Erreur lors de la détection du framework: %v", err)
+			t.Errorf("Error detecting framework: %v", err)
 		}
-		// Selon votre implémentation actuelle pour Gradle
-		// On s'attendrait à ce que le framework soit spring ou java
+		// Based on your current implementation for Gradle
+		// We would expect the framework to be spring or java
 		expectedFrameworks := map[string]bool{
 			"spring": true,
 			"java":   true,
 		}
 		if !expectedFrameworks[framework] {
-			t.Errorf("Framework détecté incorrect. Attendu: spring ou java, Obtenu: %s", framework)
+			t.Errorf("Incorrect detected framework. Expected: spring or java, Got: %s", framework)
 		}
 
-		// Nettoyer
+		// Cleanup
 		os.Remove("build.gradle")
 	})
 
-	// Test 4: Projet inconnu
+	// Test 4: Unknown Project
 	t.Run("Unknown Project", func(t *testing.T) {
-		// Ne pas créer de fichiers de projet
+		// Don't create any project files
 
-		// Tester la détection
+		// Test detection
 		framework, err := DetectFramework()
 		if err != nil {
-			t.Errorf("Erreur lors de la détection du framework: %v", err)
+			t.Errorf("Error detecting framework: %v", err)
 		}
 		if framework != "unknown" {
-			t.Errorf("Framework détecté incorrect. Attendu: %s, Obtenu: %s", "unknown", framework)
+			t.Errorf("Incorrect detected framework. Expected: %s, Got: %s", "unknown", framework)
 		}
 	})
 }
 
-// TestDetectors teste que tous les détecteurs sont correctement appelés
+// TestDetectors tests that all detectors are correctly called
 func TestDetectors(t *testing.T) {
 	testCases := []struct {
 		name         string
@@ -251,14 +251,14 @@ func TestDetectors(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			// Créer un répertoire temporaire
+			// Create a temporary directory
 			tempDir, err := os.MkdirTemp("", "detector-test")
 			if err != nil {
-				t.Fatalf("Erreur lors de la création du répertoire temporaire: %v", err)
+				t.Fatalf("Error creating temporary directory: %v", err)
 			}
 			defer os.RemoveAll(tempDir)
 
-			// Créer les fichiers simulés
+			// Create mock files
 			for path, content := range tc.mockFiles {
 				fullPath := filepath.Join(tempDir, path)
 				dirPath := filepath.Dir(fullPath)
@@ -268,20 +268,20 @@ func TestDetectors(t *testing.T) {
 				}
 
 				if err := os.WriteFile(fullPath, []byte(content), 0644); err != nil {
-					t.Fatalf("Erreur lors de la création du fichier %s: %v", fullPath, err)
+					t.Fatalf("Error creating file %s: %v", fullPath, err)
 				}
 			}
 
-			// Exécuter le scanner
+			// Run the scanner
 			scanner := NewScanner(tempDir)
 			framework, result, err := scanner.DetectFramework()
 
 			if err != nil {
-				t.Errorf("Erreur lors de la détection: %v", err)
+				t.Errorf("Error during detection: %v", err)
 			}
 
 			if framework != tc.expectedType {
-				t.Errorf("Framework détecté incorrect: %s, attendu: %s", framework, tc.expectedType)
+				t.Errorf("Incorrect detected framework: %s, expected: %s", framework, tc.expectedType)
 			}
 
 			if result.Framework != tc.expectedType {

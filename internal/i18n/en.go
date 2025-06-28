@@ -1,6 +1,6 @@
 package i18n
 
-// enTranslations contient les traductions anglaises
+// enTranslations contains English translations
 var enTranslations = map[string]string{
 	// General messages
 	"app.name":        "Turbotilt",

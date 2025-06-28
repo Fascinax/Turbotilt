@@ -11,34 +11,34 @@ import (
 
 var stopCmd = &cobra.Command{
 	Use:   "stop",
-	Short: "Arrête l'environnement de développement",
+	Short: "Stops the development environment",
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("🛑 Arrêt de l'environnement de développement...")
+		fmt.Println("🛑 Stopping development environment...")
 
-		// Vérifier si Tilt est en cours d'exécution
+		// Check if Tilt is running
 		tiltRunning := exec.Command("powershell.exe", "-Command", "Get-Process | Where-Object { $_.ProcessName -eq 'tilt' }").Run() == nil
 
 		if tiltRunning {
-			fmt.Println("⏳ Arrêt de Tilt...")
+			fmt.Println("⏳ Stopping Tilt...")
 			stopTilt := exec.Command("tilt", "down")
 			if err := stopTilt.Run(); err != nil {
-				fmt.Printf("❌ Erreur lors de l'arrêt de Tilt: %v\n", err)
+				fmt.Printf("❌ Error stopping Tilt: %v\n", err)
 			} else {
-				fmt.Println("✅ Tilt arrêté.")
+				fmt.Println("✅ Tilt stopped.")
 			}
 		} else {
-			fmt.Println("⏳ Arrêt de Docker Compose...")
+			fmt.Println("⏳ Stopping Docker Compose...")
 			stopCompose := exec.Command("docker", "compose", "down")
 			if err := stopCompose.Run(); err != nil {
-				fmt.Printf("❌ Erreur lors de l'arrêt de Docker Compose: %v\n", err)
+				fmt.Printf("❌ Error stopping Docker Compose: %v\n", err)
 			} else {
-				fmt.Println("✅ Docker Compose arrêté.")
+				fmt.Println("✅ Docker Compose stopped.")
 			}
 		}
 
-		// Proposer de nettoyer les fichiers temporaires
+		// Offer to clean temporary files
 		if cleanupFlag {
-			fmt.Println("⏳ Nettoyage des fichiers temporaires...")
+			fmt.Println("⏳ Cleaning temporary files...")
 			filesToClean := []string{"Dockerfile", "docker-compose.yml", "Tiltfile"}
 
 			for _, file := range filesToClean {
@@ -48,10 +48,10 @@ var stopCmd = &cobra.Command{
 				}
 			}
 
-			fmt.Println("✅ Fichiers temporaires nettoyés.")
+			fmt.Println("✅ Temporary files cleaned.")
 		}
 
-		fmt.Println("✨ Environnement arrêté.")
+		fmt.Println("✨ Environment stopped.")
 	},
 }
 
@@ -59,5 +59,5 @@ var cleanupFlag bool
 
 func init() {
 	rootCmd.AddCommand(stopCmd)
-	stopCmd.Flags().BoolVarP(&cleanupFlag, "cleanup", "c", false, "Nettoyer les fichiers générés (Dockerfile, docker-compose.yml, Tiltfile)")
+	stopCmd.Flags().BoolVarP(&cleanupFlag, "cleanup", "c", false, "Clean generated files (Dockerfile, docker-compose.yml, Tiltfile)")
 }

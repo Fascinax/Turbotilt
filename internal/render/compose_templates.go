@@ -1,8 +1,8 @@
 package render
 
-// ComposeTemplates contient les templates pour docker-compose.yml
+// ComposeTemplates contains templates for docker-compose.yml
 const (
-	// ComposeTemplateWithEnvFile est le template de docker-compose.yml avec un fichier d'environnement
+	// ComposeTemplateWithEnvFile is the docker-compose.yml template with an environment file
 	ComposeTemplateWithEnvFile = `version: '3'
 services:
   app:
@@ -28,7 +28,7 @@ services:
       - SPRING_PROFILES_ACTIVE={{if $.DevMode}}dev{{else}}prod{{end}}
 {{end}}`
 
-	// ComposeTemplate est le template de docker-compose.yml sans fichier d'environnement
+	// ComposeTemplate is the docker-compose.yml template without an environment file
 	ComposeTemplate = `version: '3'
 services:
   app:

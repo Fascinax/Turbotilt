@@ -5,7 +5,7 @@ import (
 	"text/template"
 )
 
-// DockerfileTemplates contient tous les templates de Dockerfiles
+// DockerfileTemplates contains all Dockerfile templates
 const (
 	SpringDockerfileTmpl = `FROM eclipse-temurin:{{.JDKVersion}} AS build
 WORKDIR /app
@@ -62,10 +62,10 @@ CMD ["sh", "start.sh"]
 `
 )
 
-// TemplateDockerfileRenderer est l'implémentation du DockerfileRenderer qui utilise des templates
+// TemplateDockerfileRenderer is the implementation of DockerfileRenderer that uses templates
 type TemplateDockerfileRenderer struct{}
 
-// renderDockerfile exécute un template de Dockerfile avec les options spécifiées
+// renderDockerfile executes a Dockerfile template with the specified options
 func (r *TemplateDockerfileRenderer) renderDockerfile(w io.Writer, tmplContent string, name string, opts Options) error {
 	tmpl, err := template.New(name).Parse(tmplContent)
 	if err != nil {
@@ -74,27 +74,27 @@ func (r *TemplateDockerfileRenderer) renderDockerfile(w io.Writer, tmplContent s
 	return tmpl.Execute(w, opts)
 }
 
-// RenderSpringDockerfile écrit un Dockerfile pour Spring Boot
+// RenderSpringDockerfile writes a Dockerfile for Spring Boot
 func (r *TemplateDockerfileRenderer) RenderSpringDockerfile(w io.Writer, opts Options) error {
 	return r.renderDockerfile(w, SpringDockerfileTmpl, "spring", opts)
 }
 
-// RenderQuarkusDockerfile écrit un Dockerfile pour Quarkus
+// RenderQuarkusDockerfile writes a Dockerfile for Quarkus
 func (r *TemplateDockerfileRenderer) RenderQuarkusDockerfile(w io.Writer, opts Options) error {
 	return r.renderDockerfile(w, QuarkusDockerfileTmpl, "quarkus", opts)
 }
 
-// RenderMicronautDockerfile écrit un Dockerfile pour Micronaut
+// RenderMicronautDockerfile writes a Dockerfile for Micronaut
 func (r *TemplateDockerfileRenderer) RenderMicronautDockerfile(w io.Writer, opts Options) error {
 	return r.renderDockerfile(w, MicronautDockerfileTmpl, "micronaut", opts)
 }
 
-// RenderJavaDockerfile écrit un Dockerfile pour une application Java générique
+// RenderJavaDockerfile writes a Dockerfile for a generic Java application
 func (r *TemplateDockerfileRenderer) RenderJavaDockerfile(w io.Writer, opts Options) error {
 	return r.renderDockerfile(w, JavaDockerfileTmpl, "java", opts)
 }
 
-// RenderGenericDockerfile écrit un Dockerfile générique pour les autres types d'applications
+// RenderGenericDockerfile writes a generic Dockerfile for other application types
 func (r *TemplateDockerfileRenderer) RenderGenericDockerfile(w io.Writer, opts Options) error {
 	return r.renderDockerfile(w, GenericDockerfileTmpl, "generic", opts)
 }

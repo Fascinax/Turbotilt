@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-// ServiceType représente un type de service détecté
+// ServiceType represents a detected service type
 type ServiceType string
 
 const (
@@ -18,7 +18,7 @@ const (
 	ElasticSearch ServiceType = "elasticsearch"
 )
 
-// ServiceConfig contient la configuration d'un service détecté
+// ServiceConfig contains the configuration of a detected service
 type ServiceConfig struct {
 	Type        ServiceType
 	Version     string
@@ -26,18 +26,18 @@ type ServiceConfig struct {
 	Credentials map[string]string
 }
 
-// DetectServices détecte les services nécessaires pour le projet
+// DetectServices detects the services required for the project
 func DetectServices() ([]ServiceConfig, error) {
 	var services []ServiceConfig
 
-	// Détecter à partir des fichiers de configuration
+	// Detect from configuration files
 	configServices, err := detectFromConfigFiles()
 	if err != nil {
 		return nil, err
 	}
 	services = append(services, configServices...)
 
-	// Détecter à partir des dépendances (Maven/Gradle)
+	// Detect from dependencies (Maven/Gradle)
 	depServices, err := detectFromDependencies()
 	if err != nil {
 		return nil, err
@@ -47,17 +47,17 @@ func DetectServices() ([]ServiceConfig, error) {
 	return services, nil
 }
 
-// detectFromConfigFiles détecte les services à partir des fichiers de configuration
+// detectFromConfigFiles detects services from configuration files
 func detectFromConfigFiles() ([]ServiceConfig, error) {
 	var services []ServiceConfig
 
-	// Vérifier dans application.properties
+	// Check in application.properties
 	propsServices, err := detectFromPropertiesFile("src/main/resources/application.properties")
 	if err == nil {
 		services = append(services, propsServices...)
 	}
 
-	// Vérifier dans application.yml
+	// Check in application.yml
 	yamlServices, err := detectFromYamlFile("src/main/resources/application.yml")
 	if err == nil {
 		services = append(services, yamlServices...)
@@ -66,16 +66,16 @@ func detectFromConfigFiles() ([]ServiceConfig, error) {
 	return services, nil
 }
 
-// detectFromPropertiesFile détecte les services à partir d'un fichier properties
+// detectFromPropertiesFile detects services from a properties file
 func detectFromPropertiesFile(path string) ([]ServiceConfig, error) {
 	var services []ServiceConfig
 
-	// Rechercher des patterns comme spring.datasource.url, etc.
-	// Exemples:
+	// Look for patterns like spring.datasource.url, etc.
+	// Examples:
 	// spring.datasource.url=jdbc:mysql://localhost:3306/db
 	// spring.data.mongodb.uri=mongodb://localhost:27017/mydb
 
-	// Pour cette version, on implémente une détection basique
+	// For this version, we implement basic detection
 
 	// MySQL
 	if hasPropertyPattern(path, "jdbc:mysql") {
@@ -125,12 +125,12 @@ func detectFromPropertiesFile(path string) ([]ServiceConfig, error) {
 	return services, nil
 }
 
-// detectFromYamlFile détecte les services à partir d'un fichier YAML
+// detectFromYamlFile detects services from a YAML file
 func detectFromYamlFile(path string) ([]ServiceConfig, error) {
 	var services []ServiceConfig
 
-	// Simplification: nous allons juste rechercher des chaînes dans le fichier YAML
-	// comme première implémentation, même si ce n'est pas robuste
+	// Simplification: we'll just search for strings in the YAML file
+	// as a first implementation, even if it's not robust
 	content, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err
@@ -138,7 +138,7 @@ func detectFromYamlFile(path string) ([]ServiceConfig, error) {
 
 	contentStr := string(content)
 
-	// Détection PostgreSQL
+	// PostgreSQL detection
 	if strings.Contains(contentStr, "jdbc:postgresql") {
 		services = append(services, ServiceConfig{
 			Type:    PostgreSQL,
@@ -152,7 +152,7 @@ func detectFromYamlFile(path string) ([]ServiceConfig, error) {
 		})
 	}
 
-	// Détection MySQL
+	// MySQL detection
 	if strings.Contains(contentStr, "jdbc:mysql") {
 		services = append(services, ServiceConfig{
 			Type:    MySQL,
@@ -165,7 +165,7 @@ func detectFromYamlFile(path string) ([]ServiceConfig, error) {
 		})
 	}
 
-	// Détection MongoDB
+	// MongoDB detection
 	if strings.Contains(contentStr, "mongodb://") {
 		services = append(services, ServiceConfig{
 			Type:    MongoDB,
@@ -174,7 +174,7 @@ func detectFromYamlFile(path string) ([]ServiceConfig, error) {
 		})
 	}
 
-	// Détection Redis
+	// Redis detection
 	if strings.Contains(contentStr, "redis://") || strings.Contains(contentStr, "spring.redis") {
 		services = append(services, ServiceConfig{
 			Type:    Redis,
@@ -186,21 +186,21 @@ func detectFromYamlFile(path string) ([]ServiceConfig, error) {
 	return services, nil
 }
 
-// detectFromDependencies détecte les services à partir des dépendances du projet
+// detectFromDependencies detects services from project dependencies
 func detectFromDependencies() ([]ServiceConfig, error) {
 	var services []ServiceConfig
 
-	// Analyser pom.xml ou build.gradle pour détecter les dépendances
-	// qui indiquent l'utilisation de certains services
+	// Analyze pom.xml or build.gradle to detect dependencies
+	// that indicate the use of certain services
 
-	// Par exemple, la présence de mysql-connector-java suggère MySQL
-	// Spring Data JPA suggère une base de données SQL, etc.
+	// For example, the presence of mysql-connector-java suggests MySQL
+	// Spring Data JPA suggests an SQL database, etc.
 
-	// Pour l'instant, renvoyer une liste vide
+	// For now, return an empty list
 	return services, nil
 }
 
-// hasPropertyPattern vérifie si un fichier contient un certain pattern
+// hasPropertyPattern checks if a file contains a certain pattern
 func hasPropertyPattern(path string, pattern string) bool {
 	content, err := os.ReadFile(path)
 	if err != nil {

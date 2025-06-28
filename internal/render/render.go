@@ -8,25 +8,25 @@ import (
 	"turbotilt/internal/scan"
 )
 
-// Options contient les paramètres de configuration pour la génération des fichiers
+// Options contains configuration parameters for file generation
 type Options struct {
-	ServiceName string               // Nom du service (pour les projets multi-services)
+	ServiceName string               // Service name (for multi-service projects)
 	Framework   string               // Framework (spring, quarkus, etc.)
-	AppName     string               // Nom de l'application
-	Port        string               // Port exposé
-	JDKVersion  string               // Version JDK
-	DevMode     bool                 // Mode développement
-	Path        string               // Chemin du service (pour les projets multi-services)
-	Services    []scan.ServiceConfig // Services dépendants détectés
-	EnvFile     string               // Chemin du fichier d'environnement
+	AppName     string               // Application name
+	Port        string               // Exposed port
+	JDKVersion  string               // JDK version
+	DevMode     bool                 // Development mode
+	Path        string               // Service path (for multi-service projects)
+	Services    []scan.ServiceConfig // Detected dependent services
+	EnvFile     string               // Path to environment file
 }
 
-// ServiceList contient la liste des services pour la génération des fichiers multi-services
+// ServiceList contains the list of services for multi-service file generation
 type ServiceList struct {
-	Services []Options // Liste des services applicatifs
+	Services []Options // List of application services
 }
 
-// DockerfileRenderer définit une interface pour la génération de Dockerfiles
+// DockerfileRenderer defines an interface for Dockerfile generation
 type DockerfileRenderer interface {
 	RenderSpringDockerfile(w io.Writer, opts Options) error
 	RenderQuarkusDockerfile(w io.Writer, opts Options) error
@@ -35,11 +35,11 @@ type DockerfileRenderer interface {
 	RenderGenericDockerfile(w io.Writer, opts Options) error
 }
 
-// GenerateDockerfile génère un Dockerfile adapté au framework détecté
+// GenerateDockerfile generates a Dockerfile adapted to the detected framework
 func GenerateDockerfile(opts Options) error {
 	f, err := os.Create("Dockerfile")
 	if err != nil {
-		return fmt.Errorf("erreur lors de la création du Dockerfile: %w", err)
+		return fmt.Errorf("error creating Dockerfile: %w", err)
 	}
 	defer f.Close()
 
@@ -57,21 +57,21 @@ func GenerateDockerfile(opts Options) error {
 	}
 }
 
-// GenerateCompose génère un docker-compose.yml
+// GenerateCompose generates a docker-compose.yml file
 func GenerateCompose(opts Options) error {
 	f, err := os.Create("docker-compose.yml")
 	if err != nil {
-		return fmt.Errorf("erreur lors de la création du docker-compose.yml: %w", err)
+		return fmt.Errorf("error creating docker-compose.yml: %w", err)
 	}
 	defer f.Close()
 
-	// Vérifier si un fichier d'environnement existe
+	// Check if an environment file exists
 	envFile := getEnvFilePath(".")
 
-	// Construire le template avec ou sans fichier d'environnement
+	// Build the template with or without an environment file
 	var tmplStr string
 	if envFile != "" {
-		// Ajouter le chemin du fichier d'environnement aux options
+		// Add the environment file path to the options
 		opts.EnvFile = envFile
 		tmplStr = ComposeTemplateWithEnvFile
 	} else {

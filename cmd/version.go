@@ -16,19 +16,19 @@ var (
 
 var versionCmd = &cobra.Command{
 	Use:   "version",
-	Short: "Affiche les informations de version",
-	Long:  `Affiche les informations détaillées sur la version de Turbotilt, incluant la version, le commit git, et les informations de build.`,
+	Short: "Display version information",
+	Long:  `Display detailed information about the Turbotilt version, including version number, git commit, and build information.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		if shortVersion {
 			fmt.Printf("Turbotilt %s\n", Version)
 			return
 		}
 
-		// Utiliser tabwriter pour un formatage propre
+		// Use tabwriter for clean formatting
 		w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
 
 		fmt.Fprintln(w, "")
-		fmt.Fprintln(w, "🚀 Turbotilt - CLI pour environnements dev cloud-native")
+		fmt.Fprintln(w, "🚀 Turbotilt - CLI for cloud-native dev environments")
 		fmt.Fprintln(w, strings.Repeat("─", 50))
 		fmt.Fprintf(w, "Version:\t%s\n", Version)
 		fmt.Fprintf(w, "Build time:\t%s\n", BuildTime)
@@ -45,5 +45,5 @@ var versionCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(versionCmd)
-	versionCmd.Flags().BoolVarP(&shortVersion, "short", "s", false, "Affiche uniquement le numéro de version")
+	versionCmd.Flags().BoolVarP(&shortVersion, "short", "s", false, "Display only the version number")
 }

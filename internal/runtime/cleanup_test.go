@@ -7,36 +7,36 @@ import (
 )
 
 func TestCleanupTempFiles(t *testing.T) {
-	// Créer des fichiers temporaires pour le test
+	// Create temporary files for the test
 	tempDir := t.TempDir()
 	tempFiles := []string{
 		filepath.Join(tempDir, "file1.tmp"),
 		filepath.Join(tempDir, "file2.tmp"),
 	}
 
-	// Créer les fichiers
+	// Create the files
 	for _, file := range tempFiles {
 		if err := os.WriteFile(file, []byte("test content"), 0644); err != nil {
-			t.Fatalf("Impossible de créer le fichier temporaire: %v", err)
+			t.Fatalf("Unable to create temporary file: %v", err)
 		}
 	}
 
-	// Vérifier que les fichiers existent
+	// Verify the files exist
 	for _, file := range tempFiles {
 		if _, err := os.Stat(file); err != nil {
-			t.Fatalf("Le fichier %s devrait exister: %v", file, err)
+			t.Fatalf("File %s should exist: %v", file, err)
 		}
 	}
 
-	// Exécuter la fonction de nettoyage
+	// Execute the cleanup function
 	CleanupTempFiles(tempFiles)
 
-	// Vérifier que les fichiers ont été supprimés
+	// Verify the files have been deleted
 	for _, file := range tempFiles {
 		if _, err := os.Stat(file); err == nil {
-			t.Errorf("Le fichier %s devrait avoir été supprimé", file)
+			t.Errorf("File %s should have been deleted", file)
 		} else if !os.IsNotExist(err) {
-			t.Errorf("Erreur inattendue lors de la vérification du fichier %s: %v", file, err)
+			t.Errorf("Unexpected error when checking file %s: %v", file, err)
 		}
 	}
 }

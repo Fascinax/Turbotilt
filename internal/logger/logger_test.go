@@ -9,7 +9,7 @@ import (
 	"testing"
 )
 
-// captureOutput capture la sortie standard pour les tests
+// captureOutput captures standard output for testing
 func captureOutput(f func()) string {
 	old := os.Stdout
 	r, w, _ := os.Pipe()
@@ -26,97 +26,97 @@ func captureOutput(f func()) string {
 }
 
 func TestSetLevel(t *testing.T) {
-	// Sauvegarde et restauration du niveau de log
+	// Save and restore log level
 	oldLevel := currentLevel
 	defer func() { currentLevel = oldLevel }()
 
-	// Test de modification du niveau
+	// Test level modification
 	SetLevel(DEBUG)
 	if currentLevel != DEBUG {
-		t.Errorf("Le niveau devrait être DEBUG, mais il est %v", currentLevel)
+		t.Errorf("Level should be DEBUG, but it is %v", currentLevel)
 	}
 
 	SetLevel(ERROR)
 	if currentLevel != ERROR {
-		t.Errorf("Le niveau devrait être ERROR, mais il est %v", currentLevel)
+		t.Errorf("Level should be ERROR, but it is %v", currentLevel)
 	}
 }
 
 func TestFileLogging(t *testing.T) {
-	// Désactiver le logging de fichier pour commencer
+	// Disable file logging to start
 	DisableFileLogging()
 	if logFile != nil {
-		t.Error("Le fichier de log devrait être nil après DisableFileLogging")
+		t.Error("Log file should be nil after DisableFileLogging")
 	}
 
-	// Créer un fichier temporaire pour les logs
+	// Create a temporary file for logs
 	tempDir := t.TempDir()
 	logPath := filepath.Join(tempDir, "test.log")
 
-	// Activer le logging de fichier
+	// Enable file logging
 	err := EnableFileLogging(logPath)
 	if err != nil {
-		t.Fatalf("EnableFileLogging a retourné une erreur: %v", err)
+		t.Fatalf("EnableFileLogging returned an error: %v", err)
 	}
 	if logFile == nil {
-		t.Error("Le fichier de log ne devrait pas être nil après EnableFileLogging")
+		t.Error("Log file should not be nil after EnableFileLogging")
 	}
 
-	// Écrire un message de log
+	// Write a log message
 	Info("Test message")
 
-	// Fermer le fichier de log
+	// Close the log file
 	DisableFileLogging()
 	if logFile != nil {
-		t.Error("Le fichier de log devrait être nil après DisableFileLogging")
+		t.Error("Log file should be nil after DisableFileLogging")
 	}
 
-	// Vérifier que le message a été écrit dans le fichier
+	// Verify that the message was written to the file
 	content, err := os.ReadFile(logPath)
 	if err != nil {
-		t.Fatalf("Impossible de lire le fichier de log: %v", err)
+		t.Fatalf("Unable to read log file: %v", err)
 	}
 	if !strings.Contains(string(content), "Test message") {
-		t.Error("Le message de log n'a pas été écrit dans le fichier")
+		t.Error("Log message was not written to the file")
 	}
 }
 
 func TestSetUseColors(t *testing.T) {
-	// Sauvegarde et restauration du paramètre
+	// Save and restore parameter
 	oldUseColors := useColors
 	defer func() { useColors = oldUseColors }()
 
-	// Test de modification
+	// Test modification
 	SetUseColors(false)
 	if useColors != false {
-		t.Error("useColors devrait être false")
+		t.Error("useColors should be false")
 	}
 
 	SetUseColors(true)
 	if useColors != true {
-		t.Error("useColors devrait être true")
+		t.Error("useColors should be true")
 	}
 }
 
 func TestSetUseEmojis(t *testing.T) {
-	// Sauvegarde et restauration du paramètre
+	// Save and restore parameter
 	oldUseEmojis := useEmojis
 	defer func() { useEmojis = oldUseEmojis }()
 
-	// Test de modification
+	// Test modification
 	SetUseEmojis(false)
 	if useEmojis != false {
-		t.Error("useEmojis devrait être false")
+		t.Error("useEmojis should be false")
 	}
 
 	SetUseEmojis(true)
 	if useEmojis != true {
-		t.Error("useEmojis devrait être true")
+		t.Error("useEmojis should be true")
 	}
 }
 
 func TestLogLevels(t *testing.T) {
-	// Sauvegarde et restauration des paramètres
+	// Save and restore parameters
 	oldLevel := currentLevel
 	oldUseColors := useColors
 	oldUseEmojis := useEmojis
@@ -126,7 +126,7 @@ func TestLogLevels(t *testing.T) {
 		useEmojis = oldUseEmojis
 	}()
 
-	// Désactiver les couleurs et emojis pour simplifier les tests
+	// Disable colors and emojis to simplify tests
 	SetUseColors(false)
 	SetUseEmojis(false)
 
@@ -141,13 +141,13 @@ func TestLogLevels(t *testing.T) {
 		{WARNING, Warning, true, "[WARN]"},
 		{ERROR, Error, true, "[ERROR]"},
 		{FATAL, func(format string, args ...interface{}) {
-			// Remplacer Fatal par une fonction qui ne quitte pas le programme
+			// Replace Fatal with a function that doesn't exit the program
 			log(FATAL, format, args...)
 		}, true, "[FATAL]"},
 	}
 
 	for _, test := range tests {
-		// Régler le niveau minimum pour que le message soit affiché
+		// Set the minimum level for the message to be displayed
 		SetLevel(test.level)
 
 		output := captureOutput(func() {
@@ -155,18 +155,18 @@ func TestLogLevels(t *testing.T) {
 		})
 
 		if test.shouldPrint && !strings.Contains(output, test.contains) {
-			t.Errorf("Le log de niveau %v devrait contenir '%s', mais a produit: %s",
+			t.Errorf("Log of level %v should contain '%s', but produced: %s",
 				test.level, test.contains, output)
 		}
 
-		// Tester le filtrage en réglant le niveau minimum au-dessus
+		// Test filtering by setting the minimum level above
 		if test.level < FATAL {
 			SetLevel(test.level + 1)
 			output = captureOutput(func() {
 				test.logFunc("Test message")
 			})
 			if output != "" {
-				t.Errorf("Le log de niveau %v ne devrait pas être affiché quand le niveau minimum est %v",
+				t.Errorf("Log of level %v should not be displayed when minimum level is %v",
 					test.level, test.level+1)
 			}
 		}
@@ -174,7 +174,7 @@ func TestLogLevels(t *testing.T) {
 }
 
 func TestFormatting(t *testing.T) {
-	// Sauvegarde et restauration des paramètres
+	// Save and restore parameters
 	oldLevel := currentLevel
 	oldUseColors := useColors
 	oldUseEmojis := useEmojis
@@ -184,7 +184,7 @@ func TestFormatting(t *testing.T) {
 		useEmojis = oldUseEmojis
 	}()
 
-	// Désactiver les couleurs et emojis
+	// Disable colors and emojis
 	SetUseColors(false)
 	SetUseEmojis(false)
 	SetLevel(INFO)
@@ -194,6 +194,6 @@ func TestFormatting(t *testing.T) {
 	})
 
 	if !strings.Contains(output, "Test message with 2 parameters") {
-		t.Errorf("Le formatage du message n'est pas correct: %s", output)
+		t.Errorf("Message formatting is not correct: %s", output)
 	}
 }

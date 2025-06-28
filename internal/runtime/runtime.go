@@ -6,32 +6,32 @@ import (
 	"os/exec"
 )
 
-// Variable pour faciliter les tests unitaires
+// Variable to facilitate unit testing
 var execCommand = exec.Command
 
-// Variable pour faciliter les tests unitaires
+// Variable to facilitate unit testing
 var isTiltInstalled = checkTiltInstalled
 
-// Options pour l'exécution
+// Options for execution
 type RunOptions struct {
 	UseTilt     bool
 	Detached    bool
 	TempFiles   []string
-	ServiceName string // Nom du service à démarrer (pour les projets multi-services)
-	DryRun      bool   // Mode simulation sans modifications réelles
-	Debug       bool   // Mode débug avec logs détaillés
+	ServiceName string // Name of the service to start (for multi-service projects)
+	DryRun      bool   // Simulation mode without actual changes
+	Debug       bool   // Debug mode with detailed logs
 }
 
-// TiltUp lance Tilt avec les options spécifiées
+// TiltUp launches Tilt with the specified options
 func TiltUp(opts RunOptions) error {
-	// Configurer le nettoyage des fichiers temporaires
+	// Set up cleanup for temporary files
 	if len(opts.TempFiles) > 0 && !opts.DryRun {
 		SetupCleanup(opts.TempFiles)
 	}
 
-	// Vérifier si Tilt est installé
+	// Check if Tilt is installed
 	if !isTiltInstalled() && opts.UseTilt {
-		fmt.Println("⚠️ Tilt n'est pas installé. Utilisation de Docker Compose.")
+		fmt.Println("⚠️ Tilt is not installed. Using Docker Compose.")
 		return ComposeUp(opts)
 	}
 
@@ -39,7 +39,7 @@ func TiltUp(opts RunOptions) error {
 		return ComposeUp(opts)
 	}
 
-	fmt.Println("🚀 Démarrage avec Tilt...")
+	fmt.Println("🚀 Starting with Tilt...")
 	args := []string{"up"}
 
 	if opts.Debug {
@@ -47,7 +47,7 @@ func TiltUp(opts RunOptions) error {
 	}
 
 	if opts.DryRun {
-		fmt.Printf("🔍 [DRY-RUN] Commande qui serait exécutée: tilt %s\n", args)
+		fmt.Printf("🔍 [DRY-RUN] Command that would be executed: tilt %s\n", args)
 		return nil
 	}
 
@@ -58,23 +58,23 @@ func TiltUp(opts RunOptions) error {
 	return cmd.Run()
 }
 
-// ComposeUp lance Docker Compose avec les options spécifiées
+// ComposeUp launches Docker Compose with the specified options
 func ComposeUp(opts RunOptions) error {
-	fmt.Println("🐳 Démarrage avec Docker Compose...")
+	fmt.Println("🐳 Starting with Docker Compose...")
 	args := []string{"compose", "up"}
 
 	if opts.Detached {
 		args = append(args, "-d")
 	}
 
-	// Si un service spécifique est demandé
+	// If a specific service is requested
 	if opts.ServiceName != "" {
-		fmt.Printf("🔍 Démarrage du service spécifique: %s\n", opts.ServiceName)
+		fmt.Printf("🔍 Starting specific service: %s\n", opts.ServiceName)
 		args = append(args, opts.ServiceName)
 	}
 
 	if opts.DryRun {
-		fmt.Printf("🔍 [DRY-RUN] Commande qui serait exécutée: docker %s\n", args)
+		fmt.Printf("🔍 [DRY-RUN] Command that would be executed: docker %s\n", args)
 		return nil
 	}
 
@@ -85,8 +85,8 @@ func ComposeUp(opts RunOptions) error {
 	return cmd.Run()
 }
 
-// checkTiltInstalled est l'implémentation réelle de la vérification
-// Séparée pour permettre le mocking dans les tests
+// checkTiltInstalled is the actual implementation of the check
+// Separated to allow mocking in tests
 func checkTiltInstalled() bool {
 	cmd := exec.Command("tilt", "version")
 	if err := cmd.Run(); err != nil {

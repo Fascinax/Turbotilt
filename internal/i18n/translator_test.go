@@ -7,49 +7,49 @@ import (
 )
 
 func TestNewTranslator(t *testing.T) {
-	// Réinitialiser la variable d'environnement LANG
+	// Reset the LANG environment variable
 	origLang := os.Getenv("LANG")
 	defer os.Setenv("LANG", origLang)
 
-	// Test avec la langue par défaut
+	// Test with default language
 	os.Setenv("LANG", "")
 	translator := NewTranslator()
 	if translator.currentLang != DefaultLang {
-		t.Errorf("La langue par défaut devrait être %s, mais elle est %s", DefaultLang, translator.currentLang)
+		t.Errorf("Default language should be %s, but got %s", DefaultLang, translator.currentLang)
 	}
 
-	// Test avec une langue supportée
+	// Test with a supported language
 	os.Setenv("LANG", "en_US.UTF-8")
 	translator = NewTranslator()
 	if translator.currentLang != "en" {
-		t.Errorf("La langue devrait être 'en', mais elle est %s", translator.currentLang)
+		t.Errorf("Language should be 'en', but got %s", translator.currentLang)
 	}
 
-	// Test avec une langue non supportée
+	// Test with an unsupported language
 	os.Setenv("LANG", "de_DE.UTF-8")
 	translator = NewTranslator()
 	if translator.currentLang != DefaultLang {
-		t.Errorf("La langue devrait revenir à %s, mais elle est %s", DefaultLang, translator.currentLang)
+		t.Errorf("Language should fall back to %s, but got %s", DefaultLang, translator.currentLang)
 	}
 }
 
 func TestSetLang(t *testing.T) {
 	translator := NewTranslator()
 
-	// Test avec une langue supportée
+	// Test with a supported language
 	if !translator.SetLang("en") {
-		t.Error("SetLang devrait retourner true pour une langue supportée")
+		t.Error("SetLang should return true for a supported language")
 	}
 	if translator.currentLang != "en" {
-		t.Errorf("La langue devrait être 'en', mais elle est %s", translator.currentLang)
+		t.Errorf("Language should be 'en', but got %s", translator.currentLang)
 	}
 
-	// Test avec une langue non supportée
+	// Test with an unsupported language
 	if translator.SetLang("de") {
-		t.Error("SetLang devrait retourner false pour une langue non supportée")
+		t.Error("SetLang should return false for an unsupported language")
 	}
 	if translator.currentLang != "en" {
-		t.Errorf("La langue ne devrait pas changer, mais elle est devenue %s", translator.currentLang)
+		t.Errorf("Language should not change, but changed to %s", translator.currentLang)
 	}
 }
 
@@ -65,7 +65,7 @@ func TestGetLang(t *testing.T) {
 func TestT(t *testing.T) {
 	translator := NewTranslator()
 
-	// Ajout de traductions pour le test
+	// Add translations for testing
 	if translator.translations["fr"] == nil {
 		translator.translations["fr"] = make(map[string]string)
 	}
@@ -78,104 +78,104 @@ func TestT(t *testing.T) {
 	translator.translations["fr"]["test_format"] = "Valeur %s avec %d paramètres"
 	translator.translations["en"]["test_format"] = "Value %s with %d parameters"
 
-	// Test avec la langue par défaut (français)
-	translator.currentLang = "fr" // Forcer la langue française
+	// Test with default language (French)
+	translator.currentLang = "fr" // Force French language
 	if msg := translator.T("test_key"); msg != "Valeur de test" {
-		t.Errorf("T devrait retourner 'Valeur de test', mais a retourné %s", msg)
+		t.Errorf("T should return 'Valeur de test', but got %s", msg)
 	}
 
-	// Test avec une autre langue
+	// Test with another language
 	translator.SetLang("en")
 	if msg := translator.T("test_key"); msg != "Test value" {
-		t.Errorf("T devrait retourner 'Test value', mais a retourné %s", msg)
+		t.Errorf("T should return 'Test value', but got %s", msg)
 	}
 
-	// Test avec des paramètres de formatage
+	// Test with formatting parameters
 	if msg := translator.T("test_format", "test", 2); msg != "Value test with 2 parameters" {
-		t.Errorf("T devrait retourner 'Value test with 2 parameters', mais a retourné %s", msg)
+		t.Errorf("T should return 'Value test with 2 parameters', but got %s", msg)
 	}
 
-	// Test avec une clé non existante
+	// Test with a non-existent key
 	if msg := translator.T("nonexistent_key"); msg != "nonexistent_key" {
-		t.Errorf("T devrait retourner la clé elle-même, mais a retourné %s", msg)
+		t.Errorf("T should return the key itself, but got %s", msg)
 	}
 
-	// Test avec une clé existante dans la langue par défaut mais pas dans la langue courante
+	// Test with a key that exists in the default language but not in the current language
 	translator.translations["fr"]["only_fr"] = "Seulement en français"
 	translator.SetLang("en")
 	if msg := translator.T("only_fr"); msg != "Seulement en français" {
-		t.Errorf("T devrait revenir à la langue par défaut, mais a retourné %s", msg)
+		t.Errorf("T should fall back to the default language, but got %s", msg)
 	}
 }
 
 func TestLoadTranslations(t *testing.T) {
-	// Créer un répertoire temporaire pour les fichiers de traduction
+	// Create a temporary directory for translation files
 	tempDir := t.TempDir()
 
-	// Créer un fichier de traduction test.json
+	// Create a test.json translation file
 	testContent := `{
 		"test_key": "Test translation",
 		"format_key": "Format with %s"
 	}`
 	if err := os.WriteFile(filepath.Join(tempDir, "test.json"), []byte(testContent), 0644); err != nil {
-		t.Fatalf("Impossible de créer le fichier de traduction: %v", err)
+		t.Fatalf("Failed to create translation file: %v", err)
 	}
 
-	// Créer un fichier non-JSON
+	// Create a non-JSON file
 	if err := os.WriteFile(filepath.Join(tempDir, "not-json.txt"), []byte("Not a JSON file"), 0644); err != nil {
-		t.Fatalf("Impossible de créer le fichier non-JSON: %v", err)
+		t.Fatalf("Failed to create non-JSON file: %v", err)
 	}
 
 	translator := NewTranslator()
 	if err := translator.LoadTranslations(tempDir); err != nil {
-		t.Fatalf("LoadTranslations a retourné une erreur: %v", err)
+		t.Fatalf("LoadTranslations returned an error: %v", err)
 	}
 
-	// Vérifier que la traduction a été chargée
+	// Verify that the translation was loaded
 	if _, ok := translator.translations["test"]; !ok {
-		t.Error("La langue 'test' n'a pas été chargée")
+		t.Error("Language 'test' was not loaded")
 	}
 
-	// Changer la langue et tester la traduction
+	// Change language and test translation
 	translator.SetLang("test")
 	if msg := translator.T("test_key"); msg != "Test translation" {
-		t.Errorf("T devrait retourner 'Test translation', mais a retourné %s", msg)
+		t.Errorf("T should return 'Test translation', but got %s", msg)
 	}
 
-	// Test avec un dossier inexistant
+	// Test with a non-existent directory
 	if err := translator.LoadTranslations("/nonexistent"); err == nil {
-		t.Error("LoadTranslations devrait retourner une erreur pour un dossier inexistant")
+		t.Error("LoadTranslations should return an error for a non-existent directory")
 	}
 }
 
 func TestGlobalTranslator(t *testing.T) {
-	// Réinitialiser le traducteur global
+	// Reset the global translator
 	global = nil
 
-	// Initialiser le traducteur global
+	// Initialize the global translator
 	Init()
 
-	// Forcer la langue française
+	// Force French language
 	global.currentLang = "fr"
 
-	// Ajouter une traduction de test
+	// Add a test translation
 	if global.translations["fr"] == nil {
 		global.translations["fr"] = make(map[string]string)
 	}
 	global.translations["fr"]["test_key"] = "Clé de test"
 
-	// Test de la fonction T globale
+	// Test the global T function
 	if msg := T("test_key"); msg != "Clé de test" {
-		t.Errorf("T global devrait retourner 'Clé de test', mais a retourné %s", msg)
+		t.Errorf("Global T should return 'Clé de test', but got %s", msg)
 	}
 
-	// Test de SetLanguage
+	// Test SetLanguage
 	if !SetLanguage("en") {
-		t.Error("SetLanguage devrait retourner true pour une langue supportée")
+		t.Error("SetLanguage should return true for a supported language")
 	}
 
-	// Vérifier que la langue a été changée
+	// Verify that the language was changed
 	if global.currentLang != "en" {
-		t.Errorf("La langue devrait être 'en', mais elle est %s", global.currentLang)
+		t.Errorf("Language should be 'en', but got %s", global.currentLang)
 	}
 }

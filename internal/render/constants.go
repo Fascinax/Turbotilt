@@ -1,6 +1,6 @@
 package render
 
-// Constantes pour les frameworks supportés
+// Constants for supported frameworks
 const (
 	FrameworkSpring    = "spring"
 	FrameworkQuarkus   = "quarkus"
@@ -9,7 +9,7 @@ const (
 	FrameworkGeneric   = "generic"
 )
 
-// Constantes pour les ports par défaut
+// Constants for default ports
 const (
 	DefaultPort         = "8080"
 	DefaultMySQLPort    = "3306"

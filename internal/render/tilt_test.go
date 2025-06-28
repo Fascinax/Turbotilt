@@ -10,27 +10,27 @@ import (
 )
 
 func TestGenerateTiltfile(t *testing.T) {
-	// Créer un répertoire temporaire pour le test
+	// Create a temporary directory for the test
 	tempDir := t.TempDir()
 
-	// Changer le répertoire de travail
+	// Change working directory
 	oldWd, err := os.Getwd()
 	if err != nil {
-		t.Fatalf("Impossible d'obtenir le répertoire de travail actuel: %v", err)
+		t.Fatalf("Unable to get current working directory: %v", err)
 	}
 	defer os.Chdir(oldWd)
 
 	if err := os.Chdir(tempDir); err != nil {
-		t.Fatalf("Impossible de changer de répertoire: %v", err)
+		t.Fatalf("Unable to change directory: %v", err)
 	}
 
-	// Créer un dossier pour les templates
+	// Create a folder for templates
 	templatesDir := filepath.Join(tempDir, "templates")
 	if err := os.Mkdir(templatesDir, 0755); err != nil {
-		t.Fatalf("Impossible de créer le dossier templates: %v", err)
+		t.Fatalf("Unable to create templates folder: %v", err)
 	}
 
-	// Créer un template de test avec un contenu direct
+	// Create a test template with direct content
 	templateContent := `# Test Tiltfile Template
 # Framework: [[.Framework]]
 # App: [[.AppName]]
@@ -38,13 +38,13 @@ func TestGenerateTiltfile(t *testing.T) {
 # Date: [[.Date]]
 # DevMode: [[.DevMode]]
 `
-	// Créer le template directement dans le dossier templates
+	// Create the template directly in the templates folder
 	templatePath := filepath.Join(templatesDir, "Tiltfile.tmpl")
 	if err := os.WriteFile(templatePath, []byte(templateContent), 0644); err != nil {
-		t.Fatalf("Impossible de créer le fichier de template: %v", err)
+		t.Fatalf("Unable to create template file: %v", err)
 	}
 
-	// Options pour la génération
+	// Options for generation
 	opts := Options{
 		Framework: "spring",
 		AppName:   "test-app",
@@ -52,72 +52,72 @@ func TestGenerateTiltfile(t *testing.T) {
 		DevMode:   true,
 	}
 
-	// Test avec un template personnalisé en utilisant GenerateTiltfileFromTemplate
+	// Test with a custom template using GenerateTiltfileFromTemplate
 	testOutputPath := filepath.Join(tempDir, "Tiltfile")
 	err = GenerateTiltfileFromTemplate(opts, templatePath, testOutputPath)
 	if err != nil {
-		t.Fatalf("GenerateTiltfileFromTemplate a retourné une erreur: %v", err)
+		t.Fatalf("GenerateTiltfileFromTemplate returned an error: %v", err)
 	}
 
-	// Vérifier que le fichier a été créé
+	// Verify that the file was created
 	if _, err := os.Stat(testOutputPath); err != nil {
-		t.Fatalf("Le Tiltfile n'a pas été créé: %v", err)
+		t.Fatalf("The Tiltfile was not created: %v", err)
 	}
 
-	// Lire le contenu du fichier généré
+	// Read the content of the generated file
 	content, err := os.ReadFile(testOutputPath)
 	if err != nil {
-		t.Fatalf("Impossible de lire le Tiltfile généré: %v", err)
+		t.Fatalf("Unable to read the generated Tiltfile: %v", err)
 	}
 
-	// Vérifier que le contenu est correct
+	// Verify that the content is correct
 	strContent := string(content)
 	if !strings.Contains(strContent, "Framework: spring") {
-		t.Error("Le Tiltfile généré ne contient pas 'Framework: spring'")
+		t.Error("The generated Tiltfile does not contain 'Framework: spring'")
 	}
 	if !strings.Contains(strContent, "App: test-app") {
-		t.Error("Le Tiltfile généré ne contient pas 'App: test-app'")
+		t.Error("The generated Tiltfile does not contain 'App: test-app'")
 	}
 	if !strings.Contains(strContent, "Port: 8080") {
-		t.Error("Le Tiltfile généré ne contient pas 'Port: 8080'")
+		t.Error("The generated Tiltfile does not contain 'Port: 8080'")
 	}
 	if !strings.Contains(strContent, "DevMode: true") {
-		t.Error("Le Tiltfile généré ne contient pas 'DevMode: true'")
+		t.Error("The generated Tiltfile does not contain 'DevMode: true'")
 	}
 }
 
 func TestGenerateTiltfileMultiService(t *testing.T) {
-	// Créer un répertoire temporaire pour le test
+	// Create a temporary directory for the test
 	tempDir := t.TempDir()
 
-	// Changer le répertoire de travail
+	// Change working directory
 	oldWd, err := os.Getwd()
 	if err != nil {
-		t.Fatalf("Impossible d'obtenir le répertoire de travail actuel: %v", err)
+		t.Fatalf("Unable to get current working directory: %v", err)
 	}
 	defer os.Chdir(oldWd)
 
 	if err := os.Chdir(tempDir); err != nil {
-		t.Fatalf("Impossible de changer de répertoire: %v", err)
+		t.Fatalf("Unable to change directory: %v", err)
 	}
 
-	// Créer un dossier pour les templates
+	// Create a folder for templates
 	templatesDir := filepath.Join(tempDir, "templates")
 	if err := os.Mkdir(templatesDir, 0755); err != nil {
-		t.Fatalf("Impossible de créer le dossier templates: %v", err)
+		t.Fatalf("Unable to create templates folder: %v", err)
 	}
 
-	// Créer un template de test pour multi-service avec la directive k8s_yaml
+	// Create a test template for multi-service with the k8s_yaml directive
 	templateContent := `# Test Tiltfile Multi Template
 # Date: [[.Date]]
 k8s_yaml('docker-compose.yml')
 `
 	templatePath := filepath.Join(templatesDir, "Tiltfile.multi.tmpl")
 	if err := os.WriteFile(templatePath, []byte(templateContent), 0644); err != nil {
-		t.Fatalf("Impossible de créer le fichier de template: %v", err)
+		t.Fatalf("Unable to create template file: %v", err)
 	}
 
-	// Créer également un fichier docker-compose.yml pour le test
+	// Also create a docker-compose.yml file for testing
 	dockerComposeContent := `version: '3'
 services:
   service1:
@@ -126,49 +126,49 @@ services:
     image: test/service2
 `
 	if err := os.WriteFile(filepath.Join(tempDir, "docker-compose.yml"), []byte(dockerComposeContent), 0644); err != nil {
-		t.Fatalf("Impossible de créer le fichier docker-compose.yml: %v", err)
+		t.Fatalf("Unable to create docker-compose.yml file: %v", err)
 	}
 
-	// Créer un Tiltfile directement depuis le template
+	// Create a Tiltfile directly from the template
 	tiltfilePath := filepath.Join(tempDir, "Tiltfile")
 
-	// Préparer les données du template
+	// Prepare template data
 	data := TiltfileTemplateData{
 		Date:           time.Now().Format("2006-01-02 15:04:05"),
 		IsMultiService: true,
 	}
 
-	// Ouvrir le fichier de sortie
+	// Open output file
 	f, err := os.Create(tiltfilePath)
 	if err != nil {
-		t.Fatalf("Impossible de créer le Tiltfile: %v", err)
+		t.Fatalf("Unable to create Tiltfile: %v", err)
 	}
 	defer f.Close()
 
-	// Créer le template et l'exécuter
+	// Create template and execute it
 	tmpl, err := template.New("MultiTest").Delims("[[", "]]").Parse(templateContent)
 	if err != nil {
-		t.Fatalf("Erreur lors du parsing du template: %v", err)
+		t.Fatalf("Error parsing template: %v", err)
 	}
 
 	if err := tmpl.Execute(f, data); err != nil {
-		t.Fatalf("Erreur lors de l'exécution du template: %v", err)
+		t.Fatalf("Error executing template: %v", err)
 	}
 
-	// Vérifier que le fichier a été créé
+	// Verify that the file was created
 	if _, err := os.Stat(tiltfilePath); err != nil {
-		t.Fatalf("Le Tiltfile n'a pas été créé: %v", err)
+		t.Fatalf("The Tiltfile was not created: %v", err)
 	}
 
-	// Lire le contenu du fichier généré
+	// Read the content of the generated file
 	content, err := os.ReadFile(tiltfilePath)
 	if err != nil {
-		t.Fatalf("Impossible de lire le Tiltfile généré: %v", err)
+		t.Fatalf("Unable to read the generated Tiltfile: %v", err)
 	}
 
-	// Vérifier que le contenu est correct pour un projet multi-service
+	// Verify that the content is correct for a multi-service project
 	strContent := string(content)
 	if !strings.Contains(strContent, "k8s_yaml") {
-		t.Error("Le Tiltfile multi-service généré devrait contenir 'k8s_yaml'")
+		t.Error("The generated multi-service Tiltfile should contain 'k8s_yaml'")
 	}
 }

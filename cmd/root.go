@@ -25,7 +25,7 @@ var (
 var rootCmd = &cobra.Command{
 	Use:     "turbotilt",
 	Short:   "Turbotilt CLI",
-	Long:    `Turbotilt - Génère et lance des environnements de dev cloud-native.`,
+	Long:    `Turbotilt - Generate and run cloud-native dev environments.`,
 	Version: Version,
 }
 
@@ -63,8 +63,8 @@ Built: %s
 func checkForUpdates() {
 	release, hasUpdate := update.CheckForUpdates(Version)
 	if hasUpdate && release != nil {
-		fmt.Printf("\n📦 Une nouvelle version de Turbotilt est disponible: %s (actuelle: %s)\n",
+		fmt.Printf("\n📦 A new version of Turbotilt is available: %s (current: %s)\n",
 			release.TagName, Version)
-		fmt.Printf("Téléchargez-la sur: %s\n\n", release.URL)
+		fmt.Printf("Download it at: %s\n\n", release.URL)
 	}
 }

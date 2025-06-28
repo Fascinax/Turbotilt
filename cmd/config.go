@@ -19,32 +19,32 @@ var (
 
 var configCmd = &cobra.Command{
 	Use:   "config",
-	Short: "Gérer la configuration Turbotilt",
-	Long:  `Gérer la configuration du projet Turbotilt (turbotilt.yml)`,
+	Short: "Manage Turbotilt configuration",
+	Long:  `Manage the Turbotilt project configuration (turbotilt.yml)`,
 }
 
 var initConfigCmd = &cobra.Command{
 	Use:   "init",
-	Short: "Initialiser le fichier de configuration",
+	Short: "Initialize configuration file",
 	Run: func(cmd *cobra.Command, args []string) {
-		logger.Info("Initialisation du fichier de configuration...")
+		logger.Info("Initializing configuration file...")
 
-		// Déterminer le framework
+		// Determine framework
 		framework := forceFramework
 		var err error
 
 		if framework == "" {
 			framework, err = scan.DetectFramework()
 			if err != nil {
-				logger.Error("Erreur lors de la détection du framework: %v", err)
+				logger.Error("Error detecting framework: %v", err)
 				framework = "unknown"
 			}
 		}
 
-		// Créer une configuration par défaut
+		// Create default configuration
 		cfg := config.DefaultConfig(framework)
 
-		// Mettre à jour avec les paramètres de la ligne de commande
+		// Update with command line parameters
 		if projectName != "" {
 			cfg.Project.Name = projectName
 		}
@@ -57,50 +57,50 @@ var initConfigCmd = &cobra.Command{
 		cfg.Framework.JdkVersion = jdkVersion
 		cfg.Development.EnableLiveReload = devMode
 
-		// Enregistrer la configuration
+		// Save configuration
 		if err := config.SaveConfig(cfg, configPath); err != nil {
-			logger.Error("Erreur lors de l'enregistrement de la configuration: %v", err)
-			fmt.Printf("❌ Erreur: %v\n", err)
+			logger.Error("Error saving configuration: %v", err)
+			fmt.Printf("❌ Error: %v\n", err)
 			return
 		}
 
-		logger.Info("Configuration enregistrée dans %s", configPath)
-		fmt.Printf("✅ Configuration enregistrée dans %s\n", configPath)
-		fmt.Println("📋 Contenu:")
-		fmt.Printf("   - Projet: %s\n", cfg.Project.Name)
+		logger.Info("Configuration saved to %s", configPath)
+		fmt.Printf("✅ Configuration saved to %s\n", configPath)
+		fmt.Println("📋 Content:")
+		fmt.Printf("   - Project: %s\n", cfg.Project.Name)
 		fmt.Printf("   - Framework: %s (JDK %s)\n", cfg.Framework.Type, cfg.Framework.JdkVersion)
 		fmt.Printf("   - Port: %s\n", cfg.Docker.Port)
 		fmt.Printf("   - Live reload: %v\n", cfg.Development.EnableLiveReload)
 
-		// Proposer la prochaine étape
-		fmt.Println("\n▶️ Pour générer les fichiers: turbotilt init")
+		// Suggest next step
+		fmt.Println("\n▶️ To generate files: turbotilt init")
 	},
 }
 
 var showConfigCmd = &cobra.Command{
 	Use:   "show",
-	Short: "Afficher la configuration actuelle",
+	Short: "Display current configuration",
 	Run: func(cmd *cobra.Command, args []string) {
-		logger.Info("Affichage de la configuration depuis %s", configPath)
+		logger.Info("Displaying configuration from %s", configPath)
 
-		// Vérifier si le fichier existe
+		// Check if file exists
 		if _, err := os.Stat(configPath); os.IsNotExist(err) {
-			logger.Error("Le fichier de configuration n'existe pas: %s", configPath)
-			fmt.Printf("❌ Le fichier de configuration n'existe pas: %s\n", configPath)
-			fmt.Println("▶️ Pour créer une configuration: turbotilt config init")
+			logger.Error("Configuration file does not exist: %s", configPath)
+			fmt.Printf("❌ Configuration file does not exist: %s\n", configPath)
+			fmt.Println("▶️ To create a configuration: turbotilt config init")
 			return
 		}
 
-		// Charger la configuration
+		// Load configuration
 		cfg, err := config.LoadConfig(configPath)
 		if err != nil {
-			logger.Error("Erreur lors du chargement de la configuration: %v", err)
-			fmt.Printf("❌ Erreur: %v\n", err)
+			logger.Error("Error loading configuration: %v", err)
+			fmt.Printf("❌ Error: %v\n", err)
 			return
 		}
 
-		fmt.Println("📋 Configuration du projet:")
-		fmt.Printf("   - Nom: %s\n", cfg.Project.Name)
+		fmt.Println("📋 Project Configuration:")
+		fmt.Printf("   - Name: %s\n", cfg.Project.Name)
 		fmt.Printf("   - Description: %s\n", cfg.Project.Description)
 		fmt.Printf("   - Version: %s\n", cfg.Project.Version)
 		fmt.Println("📦 Framework:")
@@ -108,11 +108,11 @@ var showConfigCmd = &cobra.Command{
 		fmt.Printf("   - JDK: %s\n", cfg.Framework.JdkVersion)
 		fmt.Println("🐳 Docker:")
 		fmt.Printf("   - Port: %s\n", cfg.Docker.Port)
-		fmt.Println("🛠️ Développement:")
+		fmt.Println("🛠️ Development:")
 		fmt.Printf("   - Live reload: %v\n", cfg.Development.EnableLiveReload)
-		fmt.Printf("   - Chemin de synchronisation: %s\n", cfg.Development.SyncPath)
+		fmt.Printf("   - Sync path: %s\n", cfg.Development.SyncPath)
 
-		// Afficher les services
+		// Display services
 		if len(cfg.Services) > 0 {
 			fmt.Println("🔌 Services:")
 			for _, svc := range cfg.Services {
@@ -127,15 +127,15 @@ func init() {
 	configCmd.AddCommand(initConfigCmd)
 	configCmd.AddCommand(showConfigCmd)
 
-	// Options pour config init
-	initConfigCmd.Flags().StringVarP(&configPath, "output", "o", "turbotilt.yml", "Chemin du fichier de configuration")
-	initConfigCmd.Flags().StringVarP(&projectName, "name", "n", "", "Nom du projet")
-	initConfigCmd.Flags().StringVarP(&projectDesc, "description", "D", "", "Description du projet")
+	// Options for config init
+	initConfigCmd.Flags().StringVarP(&configPath, "output", "o", "turbotilt.yml", "Configuration file path")
+	initConfigCmd.Flags().StringVarP(&projectName, "name", "n", "", "Project name")
+	initConfigCmd.Flags().StringVarP(&projectDesc, "description", "D", "", "Project description")
 	initConfigCmd.Flags().StringVarP(&forceFramework, "framework", "f", "", "Framework (spring, quarkus, java)")
-	initConfigCmd.Flags().StringVarP(&port, "port", "p", "8080", "Port à exposer")
-	initConfigCmd.Flags().StringVarP(&jdkVersion, "jdk", "j", "17", "Version du JDK")
-	initConfigCmd.Flags().BoolVarP(&devMode, "dev", "d", true, "Mode développement")
+	initConfigCmd.Flags().StringVarP(&port, "port", "p", "8080", "Port to expose")
+	initConfigCmd.Flags().StringVarP(&jdkVersion, "jdk", "j", "17", "JDK version")
+	initConfigCmd.Flags().BoolVarP(&devMode, "dev", "d", true, "Development mode")
 
-	// Options pour config show
-	showConfigCmd.Flags().StringVarP(&configPath, "file", "f", "turbotilt.yml", "Chemin du fichier de configuration")
+	// Options for config show
+	showConfigCmd.Flags().StringVarP(&configPath, "file", "f", "turbotilt.yml", "Configuration file path")
 }

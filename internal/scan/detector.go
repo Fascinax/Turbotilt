@@ -1,17 +1,17 @@
 package scan
 
-// BaseDetector contient les fonctionnalités communes à tous les détecteurs
+// BaseDetector contains common functionality for all detectors
 type BaseDetector struct {
-	// Champs communs pour tous les détecteurs
+	// Common fields for all detectors
 }
 
-// DetectionResult contient les résultats de la détection d'un framework
+// DetectionResult contains the results of the framework detection
 type DetectionResult struct {
-	Framework    string            // Le nom du framework détecté (spring, quarkus, micronaut, etc.)
-	BuildSystem  string            // Le système de build (maven, gradle, etc.)
-	JavaVersion  string            // La version de Java
-	Port         string            // Le port de l'application
-	Dependencies []string          // Les dépendances du projet
-	Properties   map[string]string // Les propriétés de configuration
-	Detected     bool              // Indique si le framework a été détecté
+	Framework    string            // The detected framework name (spring, quarkus, micronaut, etc.)
+	BuildSystem  string            // The build system (maven, gradle, etc.)
+	JavaVersion  string            // Java version
+	Port         string            // Application port
+	Dependencies []string          // Project dependencies
+	Properties   map[string]string // Configuration properties
+	Detected     bool              // Indicates if the framework was detected
 }

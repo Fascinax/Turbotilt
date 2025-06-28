@@ -7,14 +7,14 @@ import (
 	"text/template"
 )
 
-// TemplateService fournit des méthodes pour gérer les templates
+// TemplateService provides methods for managing templates
 type TemplateService struct {
 	FuncMap       template.FuncMap
 	TemplatesDirs []string
 	Delimiters    [2]string
 }
 
-// NewTemplateService crée une nouvelle instance de TemplateService
+// NewTemplateService creates a new instance of TemplateService
 func NewTemplateService() *TemplateService {
 	return &TemplateService{
 		FuncMap: template.FuncMap{
@@ -25,13 +25,13 @@ func NewTemplateService() *TemplateService {
 		TemplatesDirs: []string{
 			"templates",
 			"../templates",
-			".", // Pour les tests qui créent le template directement
+			".", // For tests that create the template directly
 		},
 		Delimiters: [2]string{"[[", "]]"},
 	}
 }
 
-// FindTemplateFile recherche un fichier template dans les répertoires configurés
+// FindTemplateFile searches for a template file in the configured directories
 func (ts *TemplateService) FindTemplateFile(baseNames ...string) (string, error) {
 	for _, dir := range ts.TemplatesDirs {
 		for _, baseName := range baseNames {
@@ -41,12 +41,12 @@ func (ts *TemplateService) FindTemplateFile(baseNames ...string) (string, error)
 			}
 		}
 	}
-	return "", fmt.Errorf("aucun fichier template trouvé parmi: %v", baseNames)
+	return "", fmt.Errorf("no template file found among: %v", baseNames)
 }
 
-// LoadTemplate charge un template à partir d'un chemin ou utilise un template par défaut si non trouvé
+// LoadTemplate loads a template from a path or uses a default template if not found
 func (ts *TemplateService) LoadTemplate(name string, templatePaths []string, defaultTemplate string) (*template.Template, error) {
-	// Essayer de charger depuis les fichiers
+	// Try to load from files
 	tmplPath, err := ts.FindTemplateFile(templatePaths...)
 	if err == nil {
 		return template.New(name).
@@ -55,24 +55,24 @@ func (ts *TemplateService) LoadTemplate(name string, templatePaths []string, def
 			ParseFiles(tmplPath)
 	}
 
-	// Si non trouvé, utiliser le template par défaut
+	// If not found, use the default template
 	return template.New(name).
 		Delims(ts.Delimiters[0], ts.Delimiters[1]).
 		Funcs(ts.FuncMap).
 		Parse(defaultTemplate)
 }
 
-// RenderToFile génère un fichier à partir d'un template et de données
+// RenderToFile generates a file from a template and data
 func (ts *TemplateService) RenderToFile(filePath string, tmpl *template.Template, data interface{}) error {
 	f, err := os.Create(filePath)
 	if err != nil {
-		return fmt.Errorf("erreur lors de la création du fichier %s: %w", filePath, err)
+		return fmt.Errorf("error creating file %s: %w", filePath, err)
 	}
 	defer f.Close()
 
 	err = tmpl.Execute(f, data)
 	if err != nil {
-		return fmt.Errorf("erreur lors de l'exécution du template: %w", err)
+		return fmt.Errorf("error executing template: %w", err)
 	}
 
 	return nil

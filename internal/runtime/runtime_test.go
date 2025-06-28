@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-// mockCmd est utilisé pour simuler les commandes externes
+// mockCmd is used to simulate external commands
 type mockCmd struct {
 	executed bool
 	command  string
@@ -17,14 +17,14 @@ type mockCmd struct {
 var lastMockCmd mockCmd
 
 func mockExecCommand(command string, args ...string) *exec.Cmd {
-	// Enregistrer la commande appelée
+	// Record the called command
 	lastMockCmd = mockCmd{
 		executed: true,
 		command:  command,
 		args:     args,
 	}
 
-	// Créer une commande qui ne fait rien (en mode test)
+	// Create a command that does nothing (in test mode)
 	cs := []string{"-test.run=TestHelperProcess", "--", command}
 	cs = append(cs, args...)
 	cmd := exec.Command(os.Args[0], cs...)
@@ -32,33 +32,33 @@ func mockExecCommand(command string, args ...string) *exec.Cmd {
 	return cmd
 }
 
-// TestHelperProcess n'est pas un vrai test, c'est un helper pour simuler des commandes externes
+// TestHelperProcess is not a real test, it's a helper to simulate external commands
 func TestHelperProcess(t *testing.T) {
 	if os.Getenv("GO_WANT_HELPER_PROCESS") != "1" {
 		return
 	}
-	// Cette fonction simule une commande externe qui se termine avec succès
+	// This function simulates an external command that completes successfully
 	os.Exit(0)
 }
 
 func TestTiltUp(t *testing.T) {
-	// Sauvegarder la fonction exec.Command originale et la restaurer après le test
+	// Save the original exec.Command function and restore it after the test
 	origExecCommand := execCommand
 	defer func() { execCommand = origExecCommand }()
 
-	// Remplacer par notre mock
+	// Replace with our mock
 	execCommand = mockExecCommand
 
-	// Réinitialiser l'état du mock
+	// Reset the mock state
 	lastMockCmd = mockCmd{}
 
-	// Force la détection de Tilt comme installé
-	// (le mock se chargera de simuler l'exécution)
+	// Force Tilt to be detected as installed
+	// (the mock will handle the execution)
 	orig := isTiltInstalled
 	defer func() { isTiltInstalled = orig }()
 	isTiltInstalled = func() bool { return true }
 
-	// Test avec Tilt
+	// Test with Tilt
 	opts := RunOptions{
 		UseTilt:  true,
 		Detached: false,
@@ -67,18 +67,18 @@ func TestTiltUp(t *testing.T) {
 
 	err := TiltUp(opts)
 	if err != nil {
-		t.Errorf("TiltUp a retourné une erreur: %v", err)
+		t.Errorf("TiltUp returned an error: %v", err)
 	}
 
 	if !lastMockCmd.executed {
-		t.Error("La commande n'a pas été exécutée")
+		t.Error("The command was not executed")
 	}
 
 	if lastMockCmd.command != "tilt" {
-		t.Errorf("La commande devrait être 'tilt', mais c'est '%s'", lastMockCmd.command)
+		t.Errorf("The command should be 'tilt', but it's '%s'", lastMockCmd.command)
 	}
 
-	// Vérifier que l'option debug a été correctement passée
+	// Verify that the debug option was correctly passed
 	found := false
 	for _, arg := range lastMockCmd.args {
 		if arg == "--debug" {
@@ -87,22 +87,22 @@ func TestTiltUp(t *testing.T) {
 		}
 	}
 	if !found {
-		t.Error("L'option --debug n'a pas été passée à la commande tilt")
+		t.Error("The --debug option was not passed to the tilt command")
 	}
 }
 
 func TestComposeUp(t *testing.T) {
-	// Sauvegarder la fonction exec.Command originale et la restaurer après le test
+	// Save the original exec.Command function and restore it after the test
 	origExecCommand := execCommand
 	defer func() { execCommand = origExecCommand }()
 
-	// Remplacer par notre mock
+	// Replace with our mock
 	execCommand = mockExecCommand
 
-	// Réinitialiser l'état du mock
+	// Reset the mock state
 	lastMockCmd = mockCmd{}
 
-	// Test avec Docker Compose en mode détaché et un service spécifique
+	// Test with Docker Compose in detached mode and a specific service
 	opts := RunOptions{
 		Detached:    true,
 		ServiceName: "api",
@@ -110,36 +110,36 @@ func TestComposeUp(t *testing.T) {
 
 	err := ComposeUp(opts)
 	if err != nil {
-		t.Errorf("ComposeUp a retourné une erreur: %v", err)
+		t.Errorf("ComposeUp returned an error: %v", err)
 	}
 
 	if !lastMockCmd.executed {
-		t.Error("La commande n'a pas été exécutée")
+		t.Error("The command was not executed")
 	}
 
 	if lastMockCmd.command != "docker" {
-		t.Errorf("La commande devrait être 'docker', mais c'est '%s'", lastMockCmd.command)
+		t.Errorf("The command should be 'docker', but it's '%s'", lastMockCmd.command)
 	}
 
-	// Vérifier que les arguments corrects ont été passés
+	// Verify that the correct arguments were passed
 	expectedArgs := []string{"compose", "up", "-d", "api"}
 	for i, arg := range expectedArgs {
 		if i >= len(lastMockCmd.args) || lastMockCmd.args[i] != arg {
-			t.Errorf("L'argument %d devrait être '%s', mais c'est '%s'",
+			t.Errorf("Argument %d should be '%s', but it's '%s'",
 				i, arg, lastMockCmd.args[i])
 		}
 	}
 }
 
 func TestDryRun(t *testing.T) {
-	// Sauvegarder la fonction exec.Command originale et la restaurer après le test
+	// Save the original exec.Command function and restore it after the test
 	origExecCommand := execCommand
 	defer func() { execCommand = origExecCommand }()
 
-	// Remplacer par notre mock
+	// Replace with our mock
 	execCommand = mockExecCommand
 
-	// Test en mode dry-run
+	// Test in dry-run mode
 	opts := RunOptions{
 		UseTilt: true,
 		DryRun:  true,
@@ -148,28 +148,28 @@ func TestDryRun(t *testing.T) {
 	lastMockCmd = mockCmd{}
 	err := TiltUp(opts)
 	if err != nil {
-		t.Errorf("TiltUp en mode dry-run a retourné une erreur: %v", err)
+		t.Errorf("TiltUp in dry-run mode returned an error: %v", err)
 	}
 
 	if lastMockCmd.executed {
-		t.Error("En mode dry-run, la commande ne devrait pas être exécutée")
+		t.Error("In dry-run mode, the command should not be executed")
 	}
 
-	// Test pour ComposeUp aussi
+	// Test for ComposeUp too
 	lastMockCmd = mockCmd{}
 	opts.UseTilt = false
 	err = ComposeUp(opts)
 	if err != nil {
-		t.Errorf("ComposeUp en mode dry-run a retourné une erreur: %v", err)
+		t.Errorf("ComposeUp in dry-run mode returned an error: %v", err)
 	}
 
 	if lastMockCmd.executed {
-		t.Error("En mode dry-run, la commande ne devrait pas être exécutée")
+		t.Error("In dry-run mode, the command should not be executed")
 	}
 }
 
 func TestSetupCleanup(t *testing.T) {
-	// Créer des fichiers temporaires pour le test
+	// Create temporary files for the test
 	tempDir := t.TempDir()
 	tempFiles := []string{
 		filepath.Join(tempDir, "file1.tmp"),
@@ -178,20 +178,20 @@ func TestSetupCleanup(t *testing.T) {
 
 	for _, file := range tempFiles {
 		if err := os.WriteFile(file, []byte("test content"), 0644); err != nil {
-			t.Fatalf("Impossible de créer le fichier temporaire: %v", err)
+			t.Fatalf("Unable to create temporary file: %v", err)
 		}
 	}
 
-	// Configurer le nettoyage
+	// Configure cleanup
 	SetupCleanup(tempFiles)
 
-	// Vérifier que les fichiers existent toujours
+	// Verify that the files still exist
 	for _, file := range tempFiles {
 		if _, err := os.Stat(file); err != nil {
-			t.Errorf("Le fichier %s devrait exister: %v", file, err)
+			t.Errorf("File %s should exist: %v", file, err)
 		}
 	}
 
-	// Note: On ne peut pas tester directement le handler de signal SIGINT/SIGTERM
-	// dans un test unitaire, donc on vérifie seulement que la fonction ne crash pas
+	// Note: We can't directly test the SIGINT/SIGTERM signal handler
+	// in a unit test, so we just verify that the function doesn't crash
 }

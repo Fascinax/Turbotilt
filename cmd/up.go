@@ -16,20 +16,20 @@ var (
 
 var upCmd = &cobra.Command{
 	Use:   "up",
-	Short: "Lance tilt up ou docker compose up",
+	Short: "Run tilt up or docker compose up",
 	Run: func(cmd *cobra.Command, args []string) {
 		if debugMode {
 			logger.SetLevel(logger.DEBUG)
-			logger.Debug("Mode debug activé")
+			logger.Debug("Debug mode enabled")
 		}
 
 		if dryRun {
-			fmt.Println("🔍 Mode simulation (dry-run) activé - aucune modification ne sera appliquée")
+			fmt.Println("🔍 Simulation mode (dry-run) enabled - no changes will be applied")
 		}
 
-		fmt.Println("🚀 Démarrage de l'environnement de développement...")
+		fmt.Println("🚀 Starting development environment...")
 
-		// Définir les options d'exécution
+		// Define runtime options
 		opts := runtime.RunOptions{
 			UseTilt:     useTilt,
 			Detached:    detached,
@@ -47,12 +47,12 @@ var upCmd = &cobra.Command{
 		}
 
 		if err != nil {
-			fmt.Printf("❌ Erreur lors du marriage: %v\n", err)
+			fmt.Printf("❌ Error starting environment: %v\n", err)
 			return
 		}
 
 		if detached {
-			fmt.Println("✅ Environnement démarré en arrière-plan.")
+			fmt.Println("✅ Environment started in background.")
 		}
 	},
 }
@@ -60,8 +60,8 @@ var upCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(upCmd)
 
-	// Flags pour la commande up
-	upCmd.Flags().BoolVarP(&useTilt, "tilt", "t", true, "Utiliser Tilt (si false, utilise Docker Compose)")
-	upCmd.Flags().StringVarP(&serviceName, "service", "s", "", "Démarrer un service spécifique du manifeste (compatible avec les projets multi-services)")
-	upCmd.Flags().BoolVarP(&detached, "detach", "d", false, "Exécution en arrière-plan (uniquement pour Docker Compose)")
+	// Flags for the up command
+	upCmd.Flags().BoolVarP(&useTilt, "tilt", "t", true, "Use Tilt (if false, uses Docker Compose)")
+	upCmd.Flags().StringVarP(&serviceName, "service", "s", "", "Start a specific service from the manifest (compatible with multi-service projects)")
+	upCmd.Flags().BoolVarP(&detached, "detach", "d", false, "Run in background (only for Docker Compose)")
 }

@@ -5,52 +5,52 @@ import (
 	"testing"
 )
 
-// TestDetectServices teste la fonctionnalité de détection des services
+// TestDetectServices tests the service detection functionality
 func TestDetectServices(t *testing.T) {
-	// Création d'un répertoire temporaire pour les tests
+	// Create a temporary directory for tests
 	tempDir, err := os.MkdirTemp("", "turbotilt-services-test-*")
 	if err != nil {
-		t.Fatalf("Impossible de créer le répertoire temporaire: %v", err)
+		t.Fatalf("Unable to create temporary directory: %v", err)
 	}
 	defer os.RemoveAll(tempDir)
 
-	// Sauvegarde du répertoire de travail actuel
+	// Save the current working directory
 	originalDir, err := os.Getwd()
 	if err != nil {
-		t.Fatalf("Impossible d'obtenir le répertoire courant: %v", err)
+		t.Fatalf("Unable to get current directory: %v", err)
 	}
 
-	// Changer au répertoire temporaire pour les tests
+	// Change to the temporary directory for tests
 	if err := os.Chdir(tempDir); err != nil {
-		t.Fatalf("Impossible de changer de répertoire: %v", err)
+		t.Fatalf("Unable to change directory: %v", err)
 	}
-	defer os.Chdir(originalDir) // Restaurer le répertoire de travail à la fin
+	defer os.Chdir(originalDir) // Restore the working directory at the end
 
-	// Test 1: Projet Spring Boot avec MySQL
+	// Test 1: Spring Boot with MySQL
 	t.Run("Spring Boot with MySQL", func(t *testing.T) {
-		// Créer un faux fichier application.properties avec configuration MySQL
+		// Create a fake application.properties file with MySQL configuration
 		propertiesContent := `
 spring.datasource.url=jdbc:mysql://localhost:3306/mydb
 spring.datasource.username=root
 spring.datasource.password=password
 spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
 `
-		// Créer les répertoires nécessaires
+		// Create necessary directories
 		if err := os.MkdirAll("src/main/resources", 0755); err != nil {
-			t.Fatalf("Impossible de créer les répertoires: %v", err)
+			t.Fatalf("Unable to create directories: %v", err)
 		}
 
 		if err := os.WriteFile("src/main/resources/application.properties", []byte(propertiesContent), 0644); err != nil {
-			t.Fatalf("Erreur lors de la création du fichier application.properties: %v", err)
+			t.Fatalf("Error creating application.properties file: %v", err)
 		}
 
-		// Tester la détection
+		// Test detection
 		services, err := DetectServices()
 		if err != nil {
-			t.Errorf("Erreur lors de la détection des services: %v", err)
+			t.Errorf("Error detecting services: %v", err)
 		}
 
-		// Vérifier si MySQL a été détecté
+		// Check if MySQL was detected
 		found := false
 		for _, service := range services {
 			if service.Type == "mysql" {
@@ -60,16 +60,16 @@ spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
 		}
 
 		if !found {
-			t.Errorf("Service MySQL non détecté")
+			t.Errorf("MySQL service not detected")
 		}
 
-		// Nettoyer
+		// Cleanup
 		os.RemoveAll("src")
 	})
 
-	// Test 2: Projet avec PostgreSQL
+	// Test 2: Project with PostgreSQL
 	t.Run("Project with PostgreSQL", func(t *testing.T) {
-		// Créer un faux fichier application.yml avec configuration PostgreSQL
+		// Create a fake application.yml file with PostgreSQL configuration
 		yamlContent := `
 spring:
   datasource:
@@ -78,41 +78,41 @@ spring:
     password: password
     driver-class-name: org.postgresql.Driver
 `
-		// Créer les répertoires nécessaires
+		// Create necessary directories
 		if err := os.MkdirAll("src/main/resources", 0755); err != nil {
-			t.Fatalf("Impossible de créer les répertoires: %v", err)
+			t.Fatalf("Unable to create directories: %v", err)
 		}
 
 		if err := os.WriteFile("src/main/resources/application.yml", []byte(yamlContent), 0644); err != nil {
-			t.Fatalf("Erreur lors de la création du fichier application.yml: %v", err)
+			t.Fatalf("Error creating application.yml file: %v", err)
 		}
 
-		// Tester la détection
+		// Test detection
 		services, err := DetectServices()
 		if err != nil {
-			t.Errorf("Erreur lors de la détection des services: %v", err)
+			t.Errorf("Error detecting services: %v", err)
 		}
 
-		// Vérifier si PostgreSQL a été détecté
+		// Check if PostgreSQL was detected
 		found := false
 		for _, service := range services {
-			if service.Type == "postgres" { // Correspond à la constante PostgreSQL
+			if service.Type == "postgres" { // Corresponds to the PostgreSQL constant
 				found = true
 				break
 			}
 		}
 
 		if !found {
-			t.Errorf("Service PostgreSQL non détecté")
+			t.Errorf("PostgreSQL service not detected")
 		}
 
-		// Nettoyer
+		// Cleanup
 		os.RemoveAll("src")
 	})
 
-	// Test 3: Projet avec Redis et MongoDB (Docker Compose)
+	// Test 3: Project with Redis and MongoDB (Docker Compose)
 	t.Run("Project with Docker Compose", func(t *testing.T) {
-		// Créer un faux fichier docker-compose.yml avec Redis et MongoDB
+		// Create a fake docker-compose.yml file with Redis and MongoDB
 		composeContent := `
 version: '3'
 services:
@@ -129,20 +129,20 @@ services:
       MONGO_INITDB_ROOT_PASSWORD: example
 `
 		if err := os.WriteFile("docker-compose.yml", []byte(composeContent), 0644); err != nil {
-			t.Fatalf("Erreur lors de la création du fichier docker-compose.yml: %v", err)
+			t.Fatalf("Error creating docker-compose.yml file: %v", err)
 		}
 
-		// Tester la détection (si votre code analyse docker-compose.yml)
+		// Test detection (if your code analyzes docker-compose.yml)
 		_, err := DetectServices()
 		if err != nil {
-			t.Errorf("Erreur lors de la détection des services: %v", err)
+			t.Errorf("Error detecting services: %v", err)
 		}
 
-		// Remarque : nous n'utilisons pas la variable de retour ici car nous ne savons pas
-		// si l'implémentation actuelle détecte les services dans docker-compose.yml
+		// Note: we don't use the return variable here because we don't know
+		// if the current implementation detects services in docker-compose.yml
 
-		// Cette partie est commentée car on ne sait pas si votre implémentation analyse docker-compose.yml
-		// Si ce n'est pas le cas, vous pouvez la désactiver ou l'adapter
+		// This part is commented out because we don't know if your implementation analyzes docker-compose.yml
+		// If it doesn't, you can disable or adapt it
 		/*
 			redisFound := false
 			mongoFound := false
@@ -156,29 +156,29 @@ services:
 			}
 
 			if !redisFound {
-				t.Errorf("Service Redis non détecté")
+				t.Errorf("Redis service not detected")
 			}
 			if !mongoFound {
-				t.Errorf("Service MongoDB non détecté")
+				t.Errorf("MongoDB service not detected")
 			}
 		*/
 
-		// Nettoyer
+		// Cleanup
 		os.Remove("docker-compose.yml")
 	})
 
-	// Test 4: Aucun service
+	// Test 4: No Services
 	t.Run("No Services", func(t *testing.T) {
-		// Ne pas créer de fichiers de configuration
+		// Don't create any configuration files
 
-		// Tester la détection
+		// Test detection
 		foundServices, err := DetectServices()
 		if err != nil {
-			t.Errorf("Erreur lors de la détection des services: %v", err)
+			t.Errorf("Error detecting services: %v", err)
 		}
 
 		if len(foundServices) > 0 {
-			t.Errorf("Des services ont été détectés alors qu'il ne devrait y en avoir aucun: %v", foundServices)
+			t.Errorf("Services were detected when there shouldn't be any: %v", foundServices)
 		}
 	})
 }

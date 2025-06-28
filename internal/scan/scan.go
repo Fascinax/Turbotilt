@@ -108,14 +108,14 @@ func (s *Scanner) DetectFramework() (string, *DetectionResult, error) {
 	return "", nil, fmt.Errorf("no framework detected")
 }
 
-// DetectFramework détecte le framework utilisé dans le projet
+// DetectFramework detects the framework used in the project
 func DetectFramework() (string, error) {
-	// Détection Maven (pom.xml)
+	// Maven detection (pom.xml)
 	if _, err := os.Stat("pom.xml"); err == nil {
 		return detectMavenFramework()
 	}
 
-	// Détection Gradle
+	// Gradle detection
 	gradleFiles := []string{"build.gradle", "build.gradle.kts"}
 	for _, file := range gradleFiles {
 		if _, err := os.Stat(file); err == nil {
@@ -123,16 +123,16 @@ func DetectFramework() (string, error) {
 		}
 	}
 
-	// Détection fichiers Quarkus spécifiques
+	// Quarkus-specific file detection
 	quarkusFiles := []string{
 		"src/main/resources/application.properties",
 		".quarkus",
-		"src/main/resources/META-INF/resources/index.html", // Souvent présent dans les projets Quarkus
+		"src/main/resources/META-INF/resources/index.html", // Often present in Quarkus projects
 	}
 
 	for _, file := range quarkusFiles {
 		if _, err := os.Stat(file); err == nil {
-			// Vérifier si contient du contenu Quarkus
+			// Check if it contains Quarkus content
 			content, err := os.ReadFile(file)
 			if err == nil && strings.Contains(string(content), "quarkus") {
 				return "quarkus", nil
@@ -140,33 +140,33 @@ func DetectFramework() (string, error) {
 		}
 	}
 
-	// Détection par structure de projet
+	// Detection by project structure
 	if isSpringProjectStructure() {
 		return "spring", nil
 	}
 
-	// Framework non détecté
+	// Framework not detected
 	return "unknown", nil
 }
 
-// detectMavenFramework détecte le framework dans un projet Maven
+// detectMavenFramework detects the framework in a Maven project
 func detectMavenFramework() (string, error) {
 	data, err := os.ReadFile("pom.xml")
 	if err != nil {
-		return "", fmt.Errorf("erreur lors de la lecture du pom.xml: %w", err)
+		return "", fmt.Errorf("error reading pom.xml: %w", err)
 	}
 
 	var project Project
 	if err := xml.Unmarshal(data, &project); err != nil {
-		return "", fmt.Errorf("erreur lors du parsing du pom.xml: %w", err)
+		return "", fmt.Errorf("error parsing pom.xml: %w", err)
 	}
 
-	// Vérifier le parent (cas courant pour Spring Boot)
+	// Check the parent (common case for Spring Boot)
 	if strings.Contains(project.Parent.GroupId, "spring") || strings.Contains(project.Parent.ArtifactId, "spring") {
 		return "spring", nil
 	}
 
-	// Recherche de dépendances Spring ou Quarkus
+	// Search for Spring or Quarkus dependencies
 	for _, dep := range project.Dependencies.Dependencies {
 		if strings.Contains(dep.GroupId, "spring") || strings.Contains(dep.ArtifactId, "spring") {
 			return "spring", nil
@@ -174,26 +174,26 @@ func detectMavenFramework() (string, error) {
 		if strings.Contains(dep.GroupId, "quarkus") || strings.Contains(dep.ArtifactId, "quarkus") {
 			return "quarkus", nil
 		}
-		// Vérification pour Micronaut ou d'autres frameworks
+		// Check for Micronaut or other frameworks
 		if strings.Contains(dep.GroupId, "micronaut") || strings.Contains(dep.ArtifactId, "micronaut") {
 			return "micronaut", nil
 		}
 	}
 
-	// Framework Java non spécifiquement identifié
+	// Java framework not specifically identified
 	return "java", nil
 }
 
-// detectGradleFramework détecte le framework dans un projet Gradle
+// detectGradleFramework detects the framework in a Gradle project
 func detectGradleFramework(gradleFile string) (string, error) {
 	data, err := os.ReadFile(gradleFile)
 	if err != nil {
-		return "", fmt.Errorf("erreur lors de la lecture de %s: %w", gradleFile, err)
+		return "", fmt.Errorf("error reading %s: %w", gradleFile, err)
 	}
 
 	content := string(data)
 
-	// Recherche d'indices spécifiques au framework
+	// Search for framework-specific indicators
 	if strings.Contains(content, "org.springframework") || strings.Contains(content, "spring-boot") {
 		return "spring", nil
 	}
@@ -204,11 +204,11 @@ func detectGradleFramework(gradleFile string) (string, error) {
 		return "micronaut", nil
 	}
 
-	// Framework Java non spécifiquement identifié
+	// Java framework not specifically identified
 	return "java", nil
 }
 
-// isSpringProjectStructure vérifie si la structure du projet correspond à Spring
+// isSpringProjectStructure checks if the project structure matches Spring
 func isSpringProjectStructure() bool {
 	springPatterns := []string{
 		"src/main/java/*/Application.java",
@@ -221,7 +221,7 @@ func isSpringProjectStructure() bool {
 	for _, pattern := range springPatterns {
 		matches, _ := filepath.Glob(pattern)
 		if len(matches) > 0 {
-			// Vérifier si les fichiers trouvés contiennent des indications Spring
+			// Check if the found files contain Spring indicators
 			for _, file := range matches {
 				content, err := os.ReadFile(file)
 				if err == nil {

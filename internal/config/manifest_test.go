@@ -161,23 +161,23 @@ func TestValidateManifest(t *testing.T) {
 		},
 	}
 
-	// Créer un répertoire temporaire
+	// Create a temporary directory
 	tempDir, err := os.MkdirTemp("", "turbotilt-test-")
 	if err != nil {
-		t.Fatalf("Erreur lors de la création du répertoire temporaire: %v", err)
+		t.Fatalf("Error creating temporary directory: %v", err)
 	}
 	defer os.RemoveAll(tempDir)
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Créer un fichier manifeste temporaire
+			// Create a temporary manifest file
 			manifestPath := filepath.Join(tempDir, "turbotilt.yaml")
 			err := os.WriteFile(manifestPath, []byte(tt.manifest), 0644)
 			if err != nil {
-				t.Fatalf("Erreur lors de l'écriture du fichier: %v", err)
+				t.Fatalf("Error writing file: %v", err)
 			}
 
-			// Charger et valider le manifeste
+			// Load and validate the manifest
 			manifest, err := LoadManifest(manifestPath)
 			if err != nil && !tt.wantErrors {
 				t.Errorf("LoadManifest() error = %v", err)

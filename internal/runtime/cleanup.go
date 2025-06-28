@@ -6,7 +6,7 @@ import (
 	"syscall"
 )
 
-// SetupCleanup configure le nettoyage des fichiers temporaires à la fermeture
+// SetupCleanup configures the cleanup of temporary files on program exit
 func SetupCleanup(tempFiles []string) {
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
@@ -18,7 +18,7 @@ func SetupCleanup(tempFiles []string) {
 	}()
 }
 
-// CleanupTempFiles supprime les fichiers temporaires générés
+// CleanupTempFiles removes the generated temporary files
 func CleanupTempFiles(tempFiles []string) {
 	for _, file := range tempFiles {
 		os.Remove(file)
