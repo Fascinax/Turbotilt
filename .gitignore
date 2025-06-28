@@ -30,3 +30,5 @@ _test
 .Trashes
 ehthumbs.db
 Thumbs.db
+.vscode/
+.idea/
