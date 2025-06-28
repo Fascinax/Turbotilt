@@ -31,6 +31,18 @@ func NewTranslator() *Translator {
 	t.translations["en"] = enTranslations
 
 	// Try to detect system language
+	t.detectSystemLanguage()
+
+	return t
+}
+
+// GetTranslator returns a singleton instance of the translator
+func GetTranslator() *Translator {
+	return NewTranslator()
+}
+
+// detectSystemLanguage tries to detect the system language
+func (t *Translator) detectSystemLanguage() {
 	lang := os.Getenv("LANG")
 	if lang != "" {
 		lang = strings.Split(lang, "_")[0]
@@ -38,8 +50,6 @@ func NewTranslator() *Translator {
 			t.currentLang = lang
 		}
 	}
-
-	return t
 }
 
 // LoadTranslations loads translations from a JSON file
@@ -110,6 +120,11 @@ func (t *Translator) T(key string, args ...interface{}) string {
 
 	// Fallback to key
 	return key
+}
+
+// Tr translates a key (alias for T)
+func (t *Translator) Tr(key string, args ...interface{}) string {
+	return t.T(key, args...)
 }
 
 // Global instance

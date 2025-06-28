@@ -49,7 +49,21 @@ var tupCmd = &cobra.Command{
 
 		// Start services using the runtime package
 		fmt.Println("⏳ Starting services in development mode...")
-		if err := runtime.StartEnvironment(serviceName, useTilt, detached, dryRun); err != nil {
+		options := runtime.RunOptions{
+			UseTilt:     useTilt,
+			Detached:    detached,
+			ServiceName: serviceName,
+			DryRun:      dryRun,
+		}
+
+		var err error
+		if useTilt {
+			err = runtime.TiltUp(options)
+		} else {
+			err = runtime.ComposeUp(options)
+		}
+
+		if err != nil {
 			fmt.Printf("❌ Failed to start environment: %v\n", err)
 			// Cleanup even if starting fails
 			cleanupFiles()

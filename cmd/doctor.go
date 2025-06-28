@@ -47,6 +47,7 @@ Examples:
   turbotilt doctor --verbose   # Complete analysis with details
   turbotilt doctor --debug     # Debug mode for detailed information`,
 	Run: func(cmd *cobra.Command, args []string) {
+		log := logger.GetLogger()
 		// Record start time to calculate execution duration
 		startTime := time.Now()
 
@@ -236,15 +237,15 @@ Examples:
 		fmt.Println("\n📋 Recommendations:")
 		if !results["docker"].installed {
 			fmt.Println("❗ Docker is required: https://docs.docker.com/get-docker/")
-			logger.Error("Docker missing - installation required")
+			log.Errorf("Docker missing - installation required")
 		} else if results["docker"].detail != "OK" {
 			fmt.Println("⚠️ Make sure the Docker daemon is running")
-			logger.Warning("Problem with Docker: %s", results["docker"].detail)
+			log.Warning("Problem with Docker: %s", results["docker"].detail)
 		}
 
 		if !results["docker-compose"].installed {
 			fmt.Println("❗ Docker Compose is required: https://docs.docker.com/compose/install/")
-			logger.Error("Docker Compose missing - installation required")
+			log.Errorf("Docker Compose missing - installation required")
 		}
 
 		if !results["tilt"].installed {

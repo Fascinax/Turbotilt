@@ -79,15 +79,58 @@ func Warning(format string, args ...interface{}) {
 	}
 }
 
+// Logger represents a logger instance
+type Logger struct{}
+
+// GetLogger returns a logger instance
+func GetLogger() *Logger {
+	return &Logger{}
+}
+
+// Debug logs a message at DEBUG level
+func (l *Logger) Debug(format string, args ...interface{}) {
+	if currentLevel <= DEBUG {
+		log(DEBUG, format, args...)
+	}
+}
+
+// Info logs a message at INFO level
+func (l *Logger) Info(format string, args ...interface{}) {
+	if currentLevel <= INFO {
+		log(INFO, format, args...)
+	}
+}
+
+// Infof logs a message at INFO level with formatting
+func (l *Logger) Infof(format string, args ...interface{}) {
+	if currentLevel <= INFO {
+		log(INFO, format, args...)
+	}
+}
+
+// Warning logs a message at WARNING level
+func (l *Logger) Warning(format string, args ...interface{}) {
+	if currentLevel <= WARNING {
+		log(WARNING, format, args...)
+	}
+}
+
 // Error logs a message at ERROR level
-func Error(format string, args ...interface{}) {
+func (l *Logger) Error(err error) {
+	if currentLevel <= ERROR {
+		log(ERROR, "%v", err)
+	}
+}
+
+// Errorf logs a message at ERROR level with formatting
+func (l *Logger) Errorf(format string, args ...interface{}) {
 	if currentLevel <= ERROR {
 		log(ERROR, format, args...)
 	}
 }
 
 // Fatal logs a message at FATAL level and terminates the program
-func Fatal(format string, args ...interface{}) {
+func (l *Logger) Fatal(format string, args ...interface{}) {
 	log(FATAL, format, args...)
 	os.Exit(1)
 }

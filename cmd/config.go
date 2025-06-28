@@ -27,6 +27,8 @@ var initConfigCmd = &cobra.Command{
 	Use:   "init",
 	Short: "Initialize configuration file",
 	Run: func(cmd *cobra.Command, args []string) {
+		log := logger.GetLogger()
+
 		logger.Info("Initializing configuration file...")
 
 		// Determine framework
@@ -36,7 +38,7 @@ var initConfigCmd = &cobra.Command{
 		if framework == "" {
 			framework, err = scan.DetectFramework()
 			if err != nil {
-				logger.Error("Error detecting framework: %v", err)
+				log.Errorf("Error detecting framework: %v", err)
 				framework = "unknown"
 			}
 		}
@@ -59,12 +61,12 @@ var initConfigCmd = &cobra.Command{
 
 		// Save configuration
 		if err := config.SaveConfig(cfg, configPath); err != nil {
-			logger.Error("Error saving configuration: %v", err)
+			log.Errorf("Error saving configuration: %v", err)
 			fmt.Printf("❌ Error: %v\n", err)
 			return
 		}
 
-		logger.Info("Configuration saved to %s", configPath)
+		log.Infof("Configuration saved to %s", configPath)
 		fmt.Printf("✅ Configuration saved to %s\n", configPath)
 		fmt.Println("📋 Content:")
 		fmt.Printf("   - Project: %s\n", cfg.Project.Name)
@@ -81,11 +83,12 @@ var showConfigCmd = &cobra.Command{
 	Use:   "show",
 	Short: "Display current configuration",
 	Run: func(cmd *cobra.Command, args []string) {
-		logger.Info("Displaying configuration from %s", configPath)
+		log := logger.GetLogger()
+		log.Infof("Displaying configuration from %s", configPath)
 
 		// Check if file exists
 		if _, err := os.Stat(configPath); os.IsNotExist(err) {
-			logger.Error("Configuration file does not exist: %s", configPath)
+			log.Errorf("Configuration file does not exist: %s", configPath)
 			fmt.Printf("❌ Configuration file does not exist: %s\n", configPath)
 			fmt.Println("▶️ To create a configuration: turbotilt config init")
 			return
@@ -94,7 +97,7 @@ var showConfigCmd = &cobra.Command{
 		// Load configuration
 		cfg, err := config.LoadConfig(configPath)
 		if err != nil {
-			logger.Error("Error loading configuration: %v", err)
+			log.Errorf("Error loading configuration: %v", err)
 			fmt.Printf("❌ Error: %v\n", err)
 			return
 		}

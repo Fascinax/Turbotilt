@@ -43,11 +43,11 @@ func (d *Detector) ScanDirectory(rootPath string) ([]Service, error) {
 		}
 
 		// Skip hidden directories and "target", "build", "node_modules", etc.
-		if info.Name()[0] == '.' || 
-		   info.Name() == "target" || 
-		   info.Name() == "build" || 
-		   info.Name() == "node_modules" ||
-		   info.Name() == "dist" {
+		if info.Name()[0] == '.' ||
+			info.Name() == "target" ||
+			info.Name() == "build" ||
+			info.Name() == "node_modules" ||
+			info.Name() == "dist" {
 			return filepath.SkipDir
 		}
 

@@ -113,7 +113,7 @@ func (w *AutoUpdateWatcher) checkForChanges() {
 		logger.Info("Detected changes, updating Tiltfile...")
 		err := w.updateTiltfile()
 		if err != nil {
-			logger.Error("Failed to update Tiltfile: %v", err)
+			fmt.Printf("Failed to update Tiltfile: %v\n", err)
 		} else {
 			logger.Info("Tiltfile updated successfully")
 			// Notify any waiting goroutines
