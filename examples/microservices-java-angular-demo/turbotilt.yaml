@@ -1,0 +1,72 @@
+# Configuration turbotilt pour le projet de démo microservices
+services:
+  # Service utilisateur (Spring Boot)
+  - name: user-service
+    path: ./user-service
+    java: "17"
+    build: maven
+    runtime: spring
+    port: "8081"
+    devMode: true
+    watchPaths:
+      - src/main/java
+      - src/main/resources
+    env:
+      SPRING_PROFILES_ACTIVE: dev
+      SPRING_RABBITMQ_HOST: localhost
+      LOGGING_LEVEL_ROOT: INFO
+
+  # Service produit (Quarkus)
+  - name: product-service
+    path: ./product-service
+    java: "17"
+    build: maven
+    runtime: quarkus
+    port: "8082"
+    devMode: true
+    watchPaths:
+      - src/main/java
+      - src/main/resources
+    env:
+      QUARKUS_PROFILE: dev
+      QUARKUS_LOG_LEVEL: INFO
+
+  # Service commande (Micronaut)
+  - name: order-service
+    path: ./order-service
+    java: "17"
+    build: maven
+    runtime: micronaut
+    port: "8083"
+    devMode: true
+    watchPaths:
+      - src/main/java
+      - src/main/resources
+    env:
+      MICRONAUT_ENVIRONMENTS: dev
+
+  # Frontend (Angular)
+  - name: frontend
+    path: ./frontend
+    type: angular
+    port: "4200"
+    devMode: true
+    commands:
+      build: "npm run build"
+      dev: "npm run start"
+    watchPaths:
+      - src
+    env:
+      NODE_ENV: development
+
+  # Service RabbitMQ
+  - name: rabbitmq
+    type: rabbitmq
+    version: "3-management"
+    port: "5672"
+    managementPort: "15672"
+    env:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq

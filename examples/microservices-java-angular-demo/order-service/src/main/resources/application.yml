@@ -1,0 +1,39 @@
+micronaut:
+  application:
+    name: order-service
+  server:
+    port: 8083
+
+datasources:
+  default:
+    url: jdbc:h2:mem:orderdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    username: sa
+    password: ""
+    driver-class-name: org.h2.Driver
+
+jpa:
+  default:
+    properties:
+      hibernate:
+        hbm2ddl:
+          auto: update
+        show_sql: true
+
+rabbitmq:
+  host: localhost
+  port: 5672
+  username: guest
+  password: guest
+
+endpoints:
+  health:
+    enabled: true
+    sensitive: false
+  loggers:
+    enabled: true
+    sensitive: false
+
+netty:
+  default:
+    allocator:
+      max-order: 3
