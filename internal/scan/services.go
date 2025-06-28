@@ -190,13 +190,98 @@ func detectFromYamlFile(path string) ([]ServiceConfig, error) {
 func detectFromDependencies() ([]ServiceConfig, error) {
 	var services []ServiceConfig
 
-	// Analyze pom.xml or build.gradle to detect dependencies
-	// that indicate the use of certain services
+	// Liste of build files to check
+	buildFiles := []string{"pom.xml", "build.gradle", "build.gradle.kts"}
 
-	// For example, the presence of mysql-connector-java suggests MySQL
-	// Spring Data JPA suggests an SQL database, etc.
+	// Utils function to check if a service is already in the list
+	contains := func(t ServiceType) bool {
+		for _, s := range services {
+			if s.Type == t {
+				return true
+			}
+		}
+		return false
+	}
 
-	// For now, return an empty list
+	// Check each build file for service patterns
+	for _, file := range buildFiles {
+		if _, err := os.Stat(file); err != nil {
+			continue
+		}
+
+		data, err := os.ReadFile(file)
+		if err != nil {
+			continue
+		}
+
+		content := strings.ToLower(string(data))
+
+		if strings.Contains(content, "mysql") && !contains(MySQL) {
+			services = append(services, ServiceConfig{
+				Type:    MySQL,
+				Version: "latest",
+				Port:    "3306",
+				Credentials: map[string]string{
+					"MYSQL_ROOT_PASSWORD": "root",
+					"MYSQL_DATABASE":      "app",
+				},
+			})
+		}
+
+		if (strings.Contains(content, "postgresql") || strings.Contains(content, "postgres")) && !contains(PostgreSQL) {
+			services = append(services, ServiceConfig{
+				Type:    PostgreSQL,
+				Version: "latest",
+				Port:    "5432",
+				Credentials: map[string]string{
+					"POSTGRES_USER":     "postgres",
+					"POSTGRES_PASSWORD": "postgres",
+					"POSTGRES_DB":       "app",
+				},
+			})
+		}
+
+		if strings.Contains(content, "mongodb") && !contains(MongoDB) {
+			services = append(services, ServiceConfig{
+				Type:    MongoDB,
+				Version: "latest",
+				Port:    "27017",
+			})
+		}
+
+		if strings.Contains(content, "redis") && !contains(Redis) {
+			services = append(services, ServiceConfig{
+				Type:    Redis,
+				Version: "latest",
+				Port:    "6379",
+			})
+		}
+
+		if strings.Contains(content, "kafka") && !contains(Kafka) {
+			services = append(services, ServiceConfig{
+				Type:    Kafka,
+				Version: "latest",
+				Port:    "9092",
+			})
+		}
+
+		if strings.Contains(content, "rabbitmq") && !contains(RabbitMQ) {
+			services = append(services, ServiceConfig{
+				Type:    RabbitMQ,
+				Version: "latest",
+				Port:    "5672",
+			})
+		}
+
+		if strings.Contains(content, "elasticsearch") && !contains(ElasticSearch) {
+			services = append(services, ServiceConfig{
+				Type:    ElasticSearch,
+				Version: "latest",
+				Port:    "9200",
+			})
+		}
+	}
+
 	return services, nil
 }
 

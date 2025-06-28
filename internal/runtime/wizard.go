@@ -3,6 +3,7 @@ package runtime
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/bubbles/textinput"
@@ -10,6 +11,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 
 	"turbotilt/internal/config"
+	"turbotilt/internal/scan"
 )
 
 var (
@@ -31,13 +33,14 @@ func (i item) FilterValue() string { return i.title }
 
 // InteractiveConfig represents the state of the interactive interface
 type InteractiveConfig struct {
-	list         list.Model
-	textInput    textinput.Model
-	config       config.Config
-	currentStep  int
-	steps        []string
-	stepComplete []bool
-	quitting     bool
+	list             list.Model
+	textInput        textinput.Model
+	config           config.Config
+	currentStep      int
+	steps            []string
+	stepComplete     []bool
+	quitting         bool
+	detectedServices []scan.ServiceConfig
 }
 
 // InitModel initializes the model for the interactive interface
@@ -67,12 +70,13 @@ func InitModel() tea.Model {
 	ti.Width = 50
 
 	m := &InteractiveConfig{
-		list:         l,
-		textInput:    ti,
-		config:       config.DefaultConfig("unknown"),
-		steps:        []string{"select", "project", "docker", "dev", "services", "generate", "start"},
-		currentStep:  0,
-		stepComplete: make([]bool, 7),
+		list:             l,
+		textInput:        ti,
+		config:           config.DefaultConfig("unknown"),
+		steps:            []string{"select", "project", "docker", "dev", "services", "generate", "start"},
+		currentStep:      0,
+		stepComplete:     make([]bool, 7),
+		detectedServices: []scan.ServiceConfig{},
 	}
 
 	return m
@@ -120,8 +124,29 @@ func (m *InteractiveConfig) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						return m, nil
 					case "🔌 Configurer les services":
 						m.currentStep = 5
-						m.textInput.SetValue("")
-						m.textInput.Placeholder = "Services requis (mysql,postgres,redis,kafka) séparés par virgule"
+						// Auto-detect services with the scanner
+						detected, err := scan.DetectServices()
+						serviceNames := []string{}
+						m.detectedServices = detected
+						if err == nil && len(detected) > 0 {
+							m.config.Services = []config.ServiceConfig{}
+							for _, svc := range detected {
+								name := strings.ToLower(string(svc.Type))
+								serviceNames = append(serviceNames, name)
+								m.config.Services = append(m.config.Services, config.ServiceConfig{
+									Name:        name,
+									Type:        string(svc.Type),
+									Version:     svc.Version,
+									Port:        svc.Port,
+									Environment: svc.Credentials,
+								})
+							}
+							m.textInput.SetValue(strings.Join(serviceNames, ","))
+							m.textInput.Placeholder = "Services détectés (modifier si nécessaire)"
+						} else {
+							m.textInput.SetValue("")
+							m.textInput.Placeholder = "Services requis (mysql,postgres,redis,kafka) séparés par virgule"
+						}
 						return m, nil
 					case "📄 Générer les fichiers":
 						m.currentStep = 6
@@ -156,7 +181,42 @@ func (m *InteractiveConfig) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.stepComplete[3] = true
 				case 5:
 					// Services
-					// Analyze required services and dependencies
+					inputServices := strings.Split(value, ",")
+					normalized := map[string]bool{}
+					m.config.Services = []config.ServiceConfig{}
+					for _, svc := range inputServices {
+						svc = strings.TrimSpace(svc)
+						if svc == "" {
+							continue
+						}
+						name := strings.ToLower(svc)
+						if normalized[name] {
+							continue
+						}
+						normalized[name] = true
+
+						// Search in detected services to get the info
+						var detected *scan.ServiceConfig
+						for _, d := range m.detectedServices {
+							if string(d.Type) == name {
+								detected = &d
+								break
+							}
+						}
+
+						cfg := config.ServiceConfig{
+							Name: name,
+							Type: name,
+						}
+						if detected != nil {
+							cfg.Version = detected.Version
+							cfg.Port = detected.Port
+							cfg.Environment = detected.Credentials
+						}
+
+						m.config.Services = append(m.config.Services, cfg)
+					}
+
 					m.stepComplete[4] = true
 				}
 				m.currentStep = 0
@@ -272,21 +332,22 @@ func (m *InteractiveConfig) View() string {
 
 		switch m.currentStep {
 		case 1:
-			title = "🔄 Configuration du Framework"
+			title = "🔄 Framework configuration"
 		case 2:
-			title = "⚙️ Configuration du Projet"
+			title = "⚙️ Project configuration"
 		case 3:
-			title = "🐳 Configuration Docker"
+			title = "🐳 Docker configuration"
 		case 4:
-			title = "🛠️ Configuration du Développement"
+			title = "🛠️ Developpement configuration"
 		case 5:
-			title = "🔌 Configuration des Services"
+			title = "🔌 Services configuration"
 		}
 
 		return fmt.Sprintf("\n%s\n\n%s\n\n%s",
 			titleStyle.Render(title),
 			m.textInput.View(),
-			"(Entrer pour valider, ESC pour annuler)")
+			"(Press Enter to confirm, 'ESC' to quit)",
+		)
 	}
 }
 

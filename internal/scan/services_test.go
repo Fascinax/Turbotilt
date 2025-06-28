@@ -167,7 +167,83 @@ services:
 		os.Remove("docker-compose.yml")
 	})
 
-	// Test 4: No Services
+	// Test 4: Scan using pom.xml
+	t.Run("Dependencies from pom.xml", func(t *testing.T) {
+		pomContent := `<?xml version="1.0" encoding="UTF-8"?>
+<project>
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>com.example</groupId>
+    <artifactId>demo</artifactId>
+    <version>1.0.0</version>
+    <dependencies>
+        <dependency>
+            <groupId>mysql</groupId>
+            <artifactId>mysql-connector-java</artifactId>
+            <version>8.0.0</version>
+        </dependency>
+    </dependencies>
+</project>`
+
+		if err := os.WriteFile("pom.xml", []byte(pomContent), 0644); err != nil {
+			t.Fatalf("Error during pom.xml creation: %v", err)
+		}
+
+		services, err := DetectServices()
+		if err != nil {
+			t.Errorf("Error during the services scan: %v", err)
+		}
+
+		found := false
+		for _, s := range services {
+			if s.Type == MySQL {
+				found = true
+				break
+			}
+		}
+		if !found {
+			t.Errorf("MySQL Service not detected using pom.xml")
+		}
+
+		os.Remove("pom.xml")
+	})
+
+	// Test 5: Scan using build.gradle
+	t.Run("Dependencies from Gradle", func(t *testing.T) {
+		gradleContent := `dependencies {
+    implementation 'org.postgresql:postgresql:42.6.0'
+    implementation 'org.apache.kafka:kafka-clients:3.5.0'
+}`
+
+		if err := os.WriteFile("build.gradle", []byte(gradleContent), 0644); err != nil {
+			t.Fatalf("Error during build.gradle creation: %v", err)
+		}
+
+		services, err := DetectServices()
+		if err != nil {
+			t.Errorf("Error during the services scan: %v", err)
+		}
+
+		pgFound := false
+		kafkaFound := false
+		for _, s := range services {
+			if s.Type == PostgreSQL {
+				pgFound = true
+			}
+			if s.Type == Kafka {
+				kafkaFound = true
+			}
+		}
+		if !pgFound {
+			t.Errorf("PostgreSQL Service not detected using build.gradle")
+		}
+		if !kafkaFound {
+			t.Errorf("Kafka Service not detected using build.gradle")
+		}
+
+		os.Remove("build.gradle")
+	})
+
+	// Test 6: No service
 	t.Run("No Services", func(t *testing.T) {
 		// Don't create any configuration files
 
