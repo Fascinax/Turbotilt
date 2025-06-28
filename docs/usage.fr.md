@@ -19,6 +19,7 @@ Turbotilt propose les commandes principales suivantes :
 |----------|-------------|
 | `init`   | Initialise un projet en créant Dockerfile, docker-compose.yml et Tiltfile |
 | `up`     | Démarre l'environnement de développement avec Tilt ou Docker Compose |
+| `tup`    | Temporary Up - génère les configurations, démarre les services et nettoie à la fin |
 | `doctor` | Vérifie l'environnement et la configuration, fournissant des diagnostics |
 | `stop`   | Arrête l'environnement et nettoie les ressources |
 | `version`| Affiche la version actuelle de Turbotilt |
@@ -161,3 +162,29 @@ Pour intégrer Turbotilt à un projet existant :
 4. Démarrez votre environnement avec `turbotilt up`
 
 Pour des informations d'intégration plus détaillées, consultez le [Guide d'intégration](./integration.fr.md).
+
+## Utilisation d'environnements temporaires avec `tup`
+
+La commande `tup` (Temporary Up) permet de générer des fichiers de configuration, démarrer des services et nettoyer automatiquement à la fin.
+
+### Utilisation de base
+
+```bash
+# Démarrer un environnement temporaire (configurations générées et nettoyées à la sortie)
+turbotilt tup
+
+# Démarrer un service spécifique
+turbotilt tup --service auth-service
+
+# Démarrer en mode détaché (arrière-plan)
+turbotilt tup --detached
+```
+
+### Principaux avantages
+
+- Pas de fichiers de configuration laissés dans votre espace de travail
+- Idéal pour tester rapidement des projets
+- Parfait pour les pipelines CI/CD
+- Collaboration d'équipe simplifiée avec détection automatique
+
+Pour une documentation complète sur la commande `tup` et ses cas d'utilisation, consultez le [Guide de la commande Tup](./tup-command.fr.md).
