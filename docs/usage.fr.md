@@ -20,6 +20,7 @@ Turbotilt propose les commandes principales suivantes :
 | `init`   | Initialise un projet en créant Dockerfile, docker-compose.yml et Tiltfile |
 | `up`     | Démarre l'environnement de développement avec Tilt ou Docker Compose |
 | `tup`    | Temporary Up - génère les configurations, démarre les services et nettoie à la fin |
+| `select` | Détecte les microservices dans un répertoire et permet de sélectionner lesquels lancer |
 | `doctor` | Vérifie l'environnement et la configuration, fournissant des diagnostics |
 | `stop`   | Arrête l'environnement et nettoie les ressources |
 | `version`| Affiche la version actuelle de Turbotilt |
@@ -188,3 +189,29 @@ turbotilt tup --detached
 - Collaboration d'équipe simplifiée avec détection automatique
 
 Pour une documentation complète sur la commande `tup` et ses cas d'utilisation, consultez le [Guide de la commande Tup](./tup-command.fr.md).
+
+## Sélection de microservices avec `select`
+
+La commande `select` vous permet de scanner un répertoire pour détecter les microservices et choisir lesquels lancer, offrant une flexibilité pour les grands projets multi-services.
+
+### Utilisation de base
+
+```bash
+# Scanner le répertoire actuel et sélectionner interactivement les services
+turbotilt select
+
+# Scanner un répertoire spécifique
+turbotilt select ./mon-repertoire-de-projet
+
+# Sélectionner des services, créer un fichier de configuration et les lancer
+turbotilt select --create-config --launch
+```
+
+### Principaux avantages
+
+- Sélection interactive des services dans les grands projets
+- Possibilité de créer des groupements de services personnalisés
+- Support pour des configurations temporaires ou permanentes
+- Idéal pour l'intégration de nouveaux membres d'équipe dans des architectures complexes
+
+Pour des scénarios d'utilisation détaillés et des options, consultez le [Guide de la commande Select](./select-command.fr.md).

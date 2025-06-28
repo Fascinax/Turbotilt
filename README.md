@@ -1,6 +1,18 @@
 # 🛠️ Turbotilt : CLI for cloud-native dev environments
 
-> **Initialization, launch and diagnosis of development environments** for Java projects (Spring Boot, Quarkus, Micronaut...), with Tilt support for live reload.
+> **Initializat## � Documentation
+
+- [Usage Guide](./docs/usage.md) - Detailed usage instructions and examples
+- [Configuration](./docs/configuration.md) - Configuration options and manifest format
+- [Integration](./docs/integration.md) - How to integrate Turbotilt with your project
+- [Supported Frameworks & Services](./docs/supported.md) - List of supported Java frameworks and dependent services
+- [Multi-Microservice Guide](./docs/practical-guide-multiservices.md) - Guide for complex multi-service projects
+- [Team Benefits](./docs/team-benefits.md) - Benefits for development teams
+- [Select Command](./docs/select-command.md) - Detailed documentation for the `select` command
+- [Tup Command](./docs/tup-command.md) - Documentation for the `tup` command
+- [Contributing](./CONTRIBUTING.md) - How to contribute to the project
+- [Testing](./TESTING.md) - Testing guidelines and procedures
+- [Release Notes](./CHANGELOG-IMPROVEMENTS.md) - Latest changes and improvementsch and diagnosis of development environments** for Java projects (Spring Boot, Quarkus, Micronaut...), with Tilt support for live reload.
 
 ![status-badge](https://img.shields.io/badge/status-beta-orange)
 ![version](https://img.shields.io/github/v/release/Fascinax/Turbotilt?include_prereleases)
@@ -18,7 +30,9 @@
 | Feature                                                                | Description                                                        |
 | ---------------------------------------------------------------------- | ------------------------------------------------------------------ |
 | 🔍 **Automatic detection** of Java frameworks (Maven/Gradle)           | Analysis of `pom.xml` & `build.gradle` files and project structure |
-| 🐳 **Dynamic generation** of Dockerfile adapted to detected framework  | Creates optimized Dockerfile for Spring, Quarkus or Micronaut      |
+| �️ **Multi-microservice selection** with `select` command             | Detect and select which services to run in complex environments    |
+| 🧹 **Temporary environments** with `tup` command                       | Generate configs, start services, and clean up when done           |
+| �🐳 **Dynamic generation** of Dockerfile adapted to detected framework  | Creates optimized Dockerfile for Spring, Quarkus or Micronaut      |
 | 🧩 **Integrated Docker Compose** with dependent services detection     | Automatically detects and configures MySQL, PostgreSQL, Redis, etc.|
 | ⚡ **Tilt support** for live-reload                                    | Generates Tiltfile with live-update rules adapted to the framework |
 | 🏥 **Advanced diagnostics** (doctor)                                   | Checks installation, environment and generates a health score      |
