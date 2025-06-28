@@ -75,6 +75,12 @@ turbotilt init
 # Start the environment with Tilt
 turbotilt up
 
+# For multi-microservice projects, detect and select services to run
+turbotilt select
+
+# Temporary start - generate configs, start services, clean up when done
+turbotilt tup
+
 # Check the environment and configuration
 turbotilt doctor
 
