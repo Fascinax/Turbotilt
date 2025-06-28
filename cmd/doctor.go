@@ -96,8 +96,8 @@ Examples:
 		}
 		results := make(map[string]diagResult)
 
-	fmt.Println("\n📋 Checking required dependencies:")
-	logger.Debug("Checking required dependencies...")
+		fmt.Println("\n📋 Checking required dependencies:")
+		logger.Debug("Checking required dependencies...")
 
 		// Check Docker (critical)
 		fmt.Print("⏳ Docker : ")
@@ -150,8 +150,8 @@ Examples:
 			results["tilt"] = diagResult{false, "", "Not installed", 2, false}
 		}
 
-	fmt.Println("\n📋 Checking development tools:")
-	logger.Debug("Checking development tools...")
+		fmt.Println("\n📋 Checking development tools:")
+		logger.Debug("Checking development tools...")
 
 		// Check Java (optional)
 		fmt.Print("⏳ Java : ")
@@ -232,25 +232,25 @@ Examples:
 			return total * 100 / max
 		}(results)
 
-	// Display recommendations
-	fmt.Println("\n📋 Recommendations:")
-	if !results["docker"].installed {
-		fmt.Println("❗ Docker is required: https://docs.docker.com/get-docker/")
-		logger.Error("Docker missing - installation required")
-	} else if results["docker"].detail != "OK" {
-		fmt.Println("⚠️ Make sure the Docker daemon is running")
-		logger.Warning("Problem with Docker: %s", results["docker"].detail)
-	}
+		// Display recommendations
+		fmt.Println("\n📋 Recommendations:")
+		if !results["docker"].installed {
+			fmt.Println("❗ Docker is required: https://docs.docker.com/get-docker/")
+			logger.Error("Docker missing - installation required")
+		} else if results["docker"].detail != "OK" {
+			fmt.Println("⚠️ Make sure the Docker daemon is running")
+			logger.Warning("Problem with Docker: %s", results["docker"].detail)
+		}
 
-	if !results["docker-compose"].installed {
-		fmt.Println("❗ Docker Compose is required: https://docs.docker.com/compose/install/")
-		logger.Error("Docker Compose missing - installation required")
-	}
+		if !results["docker-compose"].installed {
+			fmt.Println("❗ Docker Compose is required: https://docs.docker.com/compose/install/")
+			logger.Error("Docker Compose missing - installation required")
+		}
 
-	if !results["tilt"].installed {
-		fmt.Println("❗ Tilt is strongly recommended: https://docs.tilt.dev/install.html")
-		logger.Warning("Tilt missing - installation recommended")
-	}
+		if !results["tilt"].installed {
+			fmt.Println("❗ Tilt is strongly recommended: https://docs.tilt.dev/install.html")
+			logger.Warning("Tilt missing - installation recommended")
+		}
 
 		// Specific recommendations for Java developers
 		if len(projectFiles["java"]) > 0 && !results["java"].installed {
@@ -282,9 +282,9 @@ Examples:
 		duration := time.Since(startTime)
 		fmt.Printf("\n⏱️ Diagnostic completed in %.2f seconds\n", duration.Seconds())
 
-	if logToFile {
-		fmt.Printf("📄 Log saved to: %s\n", logFilePath)
-	}
+		if logToFile {
+			fmt.Printf("📄 Log saved to: %s\n", logFilePath)
+		}
 
 		logger.Info("Diagnostic terminé en %.2f secondes", duration.Seconds())
 		logger.Debug("Doctor command completed")
@@ -375,16 +375,16 @@ func checkProjectFiles() map[string][]string {
 	fmt.Println("Checking project files:")
 
 	for _, check := range fileChecks {
-		if _, err := os.Stat(check.path); err == nil {		fmt.Printf("  ✅ %s found (%s)\n", check.path, check.desc)
-		logger.Info("File found: %s (%s)", check.path, check.desc)
-		foundFiles[check.category] = append(foundFiles[check.category], check.path)
-	} else if verbose {
-		fmt.Printf("  ❌ %s not found\n", check.path)
-		logger.Debug("Missing file: %s", check.path)
+		if _, err := os.Stat(check.path); err == nil {
+			fmt.Printf("  ✅ %s found (%s)\n", check.path, check.desc)
+			logger.Info("File found: %s (%s)", check.path, check.desc)
+			foundFiles[check.category] = append(foundFiles[check.category], check.path)
+		} else if verbose {
+			fmt.Printf("  ❌ %s not found\n", check.path)
+			logger.Debug("Missing file: %s", check.path)
 		}
 	}
 
-	if len(foundFiles["maven"]) > 0 {
 	if len(foundFiles["maven"]) > 0 {
 		fmt.Println("  📄 Maven project detected")
 	}
