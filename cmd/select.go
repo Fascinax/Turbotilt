@@ -109,24 +109,31 @@ For example:
 			log.Infof("- %s (%s)", service.Name, service.Type)
 		}
 
-		// Create config if requested
-		if selectCreateConfig || selectOutputFile != "" {
-			// Create a manifest from selected services
-			manifest := config.Manifest{
-				Services: []config.ManifestService{},
+		// Convertir scan.Service en config.ManifestService
+		manifestServices := []config.ManifestService{}
+		for _, service := range selectedServices {
+			servicePath, err := filepath.Rel(absDir, service.Path)
+			if err != nil {
+				servicePath = service.Path
 			}
 
-			for _, service := range selectedServices {
-				servicePath, err := filepath.Rel(absDir, service.Path)
-				if err != nil {
-					servicePath = service.Path
-				}
+			manifestServices = append(manifestServices, config.ManifestService{
+				Name: service.Name,
+				Path: servicePath,
+				Type: service.Type,
+			})
+		}
 
-				manifest.Services = append(manifest.Services, config.ManifestService{
-					Name: service.Name,
-					Path: servicePath,
-					Type: service.Type,
-				})
+		// Stocker dans le memoryStore
+		memoryStore := config.GetMemoryStore()
+		memoryStore.StoreSelectedServices(manifestServices)
+		log.Info(t.Tr("Services stored in memory for this session"))
+
+		// Create config file if requested
+		if selectCreateConfig || selectOutputFile != "" {
+			// Utiliser les services déjà convertis et stockés en mémoire
+			manifest := config.Manifest{
+				Services: memoryStore.GetSelectedServices(),
 			}
 
 			// Marshal to YAML
@@ -165,22 +172,9 @@ For example:
 					configFile = filepath.Join(absDir, "turbotilt.yaml")
 				}
 			} else {
-				// Create a temporary config
+				// Utiliser les services déjà stockés en mémoire
 				manifest := config.Manifest{
-					Services: []config.ManifestService{},
-				}
-
-				for _, service := range selectedServices {
-					servicePath, err := filepath.Rel(absDir, service.Path)
-					if err != nil {
-						servicePath = service.Path
-					}
-
-					manifest.Services = append(manifest.Services, config.ManifestService{
-						Name: service.Name,
-						Path: servicePath,
-						Type: service.Type,
-					})
+					Services: memoryStore.GetSelectedServices(),
 				}
 
 				// Marshal to YAML

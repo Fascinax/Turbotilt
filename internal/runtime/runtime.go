@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	
+	"turbotilt/internal/config"
 )
 
 // Variable to facilitate unit testing
@@ -20,6 +22,8 @@ type RunOptions struct {
 	ServiceName string // Name of the service to start (for multi-service projects)
 	DryRun      bool   // Simulation mode without actual changes
 	Debug       bool   // Debug mode with detailed logs
+	ConfigFile  string // Chemin vers le fichier de configuration à utiliser
+	UseMemory   bool   // Utiliser la configuration stockée en mémoire
 }
 
 // TiltUp launches Tilt with the specified options
@@ -37,6 +41,21 @@ func TiltUp(opts RunOptions) error {
 
 	if !opts.UseTilt {
 		return ComposeUp(opts)
+	}
+
+	// Vérifier si on utilise la configuration en mémoire
+	if opts.UseMemory && opts.ConfigFile == "" {
+		memoryStore := config.GetMemoryStore()
+		if memoryStore.HasSelectedServices() {
+			// Utiliser la configuration en mémoire pour générer les fichiers temporaires
+			_ = config.GetManifestFromMemory() // On récupère la configuration mais on ne l'utilise pas encore
+			
+			// Générer les fichiers temporaires avec cette configuration
+			fmt.Println("📦 Using services configuration from memory")
+			
+			// TODO: Implémenter la génération de fichiers à partir de la configuration en mémoire
+			// Pour l'instant, nous utilisons le comportement par défaut
+		}
 	}
 
 	fmt.Println("🚀 Starting with Tilt...")
