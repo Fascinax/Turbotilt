@@ -24,7 +24,7 @@ var upCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		t := i18n.GetTranslator()
 		log := logger.GetLogger()
-		
+
 		if debugMode {
 			logger.SetLevel(logger.DEBUG)
 			log.Debug("Debug mode enabled")
@@ -35,7 +35,7 @@ var upCmd = &cobra.Command{
 		}
 
 		log.Info("🚀 Starting development environment...")
-		
+
 		// Vérifier si on doit utiliser la configuration en mémoire
 		if useMemory {
 			// Vérifier si des services sont stockés en mémoire

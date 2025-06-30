@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	
+
 	"turbotilt/internal/config"
 )
 
@@ -47,14 +47,16 @@ func TiltUp(opts RunOptions) error {
 	if opts.UseMemory && opts.ConfigFile == "" {
 		memoryStore := config.GetMemoryStore()
 		if memoryStore.HasSelectedServices() {
-			// Utiliser la configuration en mémoire pour générer les fichiers temporaires
-			_ = config.GetManifestFromMemory() // On récupère la configuration mais on ne l'utilise pas encore
-			
-			// Générer les fichiers temporaires avec cette configuration
+			// Générer les fichiers temporaires avec la configuration en mémoire
 			fmt.Println("📦 Using services configuration from memory")
-			
-			// TODO: Implémenter la génération de fichiers à partir de la configuration en mémoire
-			// Pour l'instant, nous utilisons le comportement par défaut
+
+			// Générer Dockerfile, docker-compose.yml et Tiltfile à partir de la configuration en mémoire
+			if err := config.GenerateFilesFromMemory(); err != nil {
+				fmt.Printf("⚠️ Error generating files from memory: %v\n", err)
+				fmt.Println("Falling back to default behavior...")
+			} else {
+				fmt.Println("✅ Successfully generated files from memory")
+			}
 		}
 	}
 
